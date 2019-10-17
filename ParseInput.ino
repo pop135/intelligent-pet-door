@@ -1,194 +1,391 @@
-int const space = 32;
+/*int const space = 32;
 int const carriageReturn = 10;
 int const commandNow = 0;
 int const commandProgram = 1;
 int const movementFree = 0;
 int const movementIn = 1;
 int const movementOut = 2;
-int const movementClose = 3;
+int const movementClose = 3;*/
+
+int const MAX_WORDS = 6;
 
 
 
-commandIssued parseInput(){
-  int incomingByte;
-  commandIssued command;
-  command.commandName = -1;
-  command.hour = -1;
-  command.minute = -1;
-  command.movement = -1;
+void serialEvent(){
+
+	//maintain until processcommands not implemented
+	command.commandName = -1;
+	command.hour = -1;
+	command.minute = -1;
+	command.movement = -1;
+	command.modifierFlag = -1;
+	
+	//maintain until process when not implemented
+	action.movement = -1;
+	action.npetsIn = -1;
+	action.npetsOut = -1;
   
-  if(Serial.available() > 0){
-    incomingByte = Serial.read();
-    if(incomingByte != '/'){
-      serialFlush();
-      Serial.println("Incorrect command. /usage to help."); 
-    }
-    else{
-      char input[100];
-      int i = 0;
-      
-      while (Serial.available() > 0){
-        //reading word
-        incomingByte = Serial.read();
-        if ((incomingByte != space) && (incomingByte != carriageReturn)){
-          input[i] = incomingByte;
-          i++;  
-        }
-        //understanding word
-        else {
-          input[i] = '\0';
-          //we have no command 
-          if(command.commandName == -1){
-            if(strcmp(input,"now")==0){
-              command.commandName = 0;
-            }
-            else if(strcmp(input,"program")==0){
-              command.commandName = 1;
-            }
-            else if(strcmp(input,"usage")==0){
-              serialFlush();
-              showUsage();
-              break;
-            }
-            else{
-              serialFlush();
-              Serial.println("Incorrect command. /usage to help."); 
-              break;
-            }
-          }
-          //we have NOW command and we have to read a parameter
-          else if (command.commandName == 0){
-            if(command.movement == -1){
-              if(strcmp(input,"free")==0){
-                command.movement = 0;
-                serialFlush();
-                return command;
-              }
-              else if (strcmp(input,"in")==0){
-                command.movement = 1;
-                serialFlush();
-                return command;
-              }
-              else if (strcmp(input,"out")==0){
-                command.movement = 2;
-                serialFlush();
-                return command;
-              }
-              else if (strcmp(input,"close")==0){
-                command.movement = 3;
-                serialFlush();
-                return command;
-              }
-              else{
-                serialFlush();
-                Serial.println("Incorrect action. /usage to help.");  
-                break;
-              }
-            }
-          }
-        //we have PROGRAM command and we have to read two parameters
-          else if (command.commandName == 1){
-            //hour and minutes not set.
-            if (command.hour == -1 && command.minute == -1){
-              char *token;
-              token = strtok(input,":");
-              char* hour = token;
-              token = strtok(NULL,":");
-              char* minute = token;
-              token = strtok(NULL,":");
-              //if there are more than two tokens error
-              if (token != NULL){
-                serialFlush();
-                Serial.println("Correct format for hour is HH:MM. /usage to help.");  
-                break;
-              }
-              //check tokens integrity
-              int h = checkIntegrity(hour);
-              int m = checkIntegrity(minute);
-  
-              /*if((h == -1) || (m == -1)){
-                serialFlush();
-                Serial.println("Correct format for hour is HH:MM. /usage to help."); 
-                break;
-              }*/
-  
-              if(h >= 0 && h <= 23 && m >= 0 && m <= 59){
-                command.hour = h;
-                command.minute = m;
-              }
-              else{
-                serialFlush();
-                Serial.println("Correct format for hour is HH:MM. /usage to help.");
-                break;
-              }
-            }
-            //hour and minutes already set so lets take movement
-            else{
-              if(strcmp(input,"free")==0){
-                command.movement = 0;
-                serialFlush();
-                return command;
-              }
-              else if (strcmp(input,"in")==0){
-                command.movement = 1;
-                serialFlush();
-                return command;
-              }
-              else if (strcmp(input,"out")==0){
-                command.movement = 2;
-                serialFlush();
-                return command;
-              }
-              else if (strcmp(input,"close")==0){
-                command.movement = 3;
-                serialFlush();
-                return command;
-              }
-              else{
-                serialFlush();
-                Serial.println("Incorrect action. /usage to help.");   
-                break;
-              }
-            }
-          }
-          i=0;
-        }
-      }
-    }
-  }
 
-  //in case of error return empty structure 
-  command.commandName = -1;
-  command.hour = -1;
-  command.minute = -1;
-  command.movement = -1;
-  return command;
+	int endFirstWord = 0;
+	int nwords=0;
+	String word;
+	String words[MAX_WORDS+1]; 
+	String input = Serial.readString(); 
+	input.trim();
+	input.toLowerCase();
+	
+	for(int i=0;i<MAX_WORDS+1;i++){
+		words[i]="";
+	}
+
+	while(endFirstWord != -1 && nwords < MAX_WORDS+1){
+		
+		//getting the word
+		endFirstWord = input.indexOf(' ');
+		if(endFirstWord != -1){
+			word = input.substring(0,endFirstWord);
+		}
+		else{
+			word = input;
+		}
+		input.remove(0,endFirstWord);
+		input.trim();
+		words[nwords] = word;
+		nwords++;
+		
+		/*Serial.print("Word: ");
+		Serial.println(word);
+		Serial.print("Input remaining: ");
+		Serial.println(input);
+		Serial.print("nwords: ");
+		Serial.println(nwords);
+		Serial.print("endfirstword: ");
+		Serial.println(endFirstWord);
+		Serial.println("");
+		for(int i=0;i<MAX_WORDS+1;i++){
+			Serial.print("words[");
+			Serial.print(i);
+			Serial.print("] ->");
+			Serial.print(words[i]);
+			Serial.println("<-");
+		}
+		Serial.println("");*/
+		
+	}
+	
+	//in case that the string is longer than maxium words command
+	serialFlush();
+	
+	//actually understanding the word
+	if(words[0].equals("/now")){
+		command.commandName = 0;
+		if(words[1].equals("free")){command.movement = 0;}
+		else if (words[1].equals("in")){command.movement = 1;}
+		else if (words[1].equals("out")){command.movement = 2;}
+		else if (words[1].equals("close")){command.movement = 3;}
+		else{
+			Serial.println(F("Incorrect action. /usage to help.")); 
+			clearCommand();
+			return;
+		}
+		if(words[2].equals("")){return;}
+		else{
+			Serial.println(F("Something weird after command. /usage to help."));  
+			clearCommand();
+			return;
+		}
+	}
+	else if (words[0].equals("/program")){
+		command.commandName = 1;
+		int modifierFlag = 0;
+		
+		if(words[1].equals("show")){
+			command.modifierFlag = 2;
+			if(words[2].equals("")){return;}
+			else{
+				Serial.println("Something weird after command. /usage to help.");  
+				clearCommand();
+				return;
+			}
+		}
+		
+		if (words[1].equals("del")){
+			command.modifierFlag = 1;
+			modifierFlag = 1;
+		}
+		
+		if (checkDateIntegrity(words[1+modifierFlag]) == 0){
+			if(!modifierFlag){
+				command.modifierFlag = 0;
+				if(words[2+modifierFlag].equals("free")){command.movement = 0;}
+				else if (words[2+modifierFlag].equals("in")){command.movement = 1;}
+				else if (words[2+modifierFlag].equals("out")){command.movement = 2;}
+				else if (words[2+modifierFlag].equals("close")){command.movement = 3;}
+				else{
+					Serial.println(F("Incorrect action. /usage to help.")); 
+					clearCommand();
+					return;
+				}
+			}
+			if(words[3].equals("")){return;}
+			else{
+				Serial.println(F("Something weird after command. /usage to help."));  
+				clearCommand();
+				return;
+			}
+			
+
+		}
+		else{
+			Serial.println(F("Correct format for hour is HH:MM. /usage to help.")); 
+			clearCommand();
+			return;
+		}
+	}
+	else if(words[0].equals("/when")){
+		if(words[1].equals("allin")){
+			if(words[2].equals("free")){action.movement = 0;}
+			else if (words[2].equals("in")){action.movement = 1;}
+			else if (words[2].equals("out")){action.movement = 2;}
+			else if (words[2].equals("close")){action.movement = 3;}
+			else{
+				Serial.println(F("Incorrect action. /usage to help.")); 
+				clearNextAction();
+				return;
+			}
+			if(words[3].equals("")){
+				action.npetsIn = npets;
+				action.npetsOut = 0;
+			}
+			else{
+				Serial.println(F("Something weird after command. /usage to help."));  
+				clearNextAction();
+				return;
+			}
+		}
+		else if(words[1].equals("allout")){
+			if(words[2].equals("free")){action.movement = 0;}
+			else if (words[2].equals("in")){action.movement = 1;}
+			else if (words[2].equals("out")){action.movement = 2;}
+			else if (words[2].equals("close")){action.movement = 3;}
+			else{
+				Serial.println(F("Incorrect action. /usage to help.")); 
+				clearNextAction();
+				return;
+			}
+			if(words[3].equals("")){
+				action.npetsIn = 0;
+				action.npetsOut = npets;
+			}
+			else{
+				Serial.println(F("Something weird after command. /usage to help."));  
+				clearNextAction();
+				return;
+			}
+		}
+		else if(stringToInt(words[1]) != -1){
+			if(words[2].equals("in")){
+				if(stringToInt(words[3]) != -1){
+					if(words[4].equals("out")){
+						if(words[5].equals("free")){action.movement = 0;}
+						else if (words[5].equals("in")){action.movement = 1;}
+						else if (words[5].equals("out")){action.movement = 2;}
+						else if (words[5].equals("close")){action.movement = 3;}
+						else{
+							Serial.println(F("Incorrect action. /usage to help.")); 
+							clearNextAction();
+							return;
+						}
+						if(words[6].equals("")){
+							if((words[1].toInt() + words[3].toInt()) == npets){
+								action.npetsIn = words[1].toInt();
+								action.npetsOut = words[3].toInt();
+							}
+							else{
+								Serial.print(F("Bad number of pets. The quantity of in/out pets should be "));
+								Serial.print(npets);
+								Serial.println(".");
+								clearNextAction();
+								return;
+							}
+						}
+						else{
+							Serial.println(F("Something weird after command. /usage to help."));  
+							clearNextAction();
+							return;
+						}
+					}
+					else{
+						Serial.println(F("Incorrect command. /usage to help.")); 
+						clearNextAction();
+						return;
+					}
+					
+				}
+				else{
+					Serial.println(F("Incorrect command. /usage to help.")); 
+					clearNextAction();
+					return;
+				}
+			}
+			else if (words[2].equals("out")){
+				if(stringToInt(words[3]) != -1){
+					if(words[4].equals("in")){
+						if(words[5].equals("free")){action.movement = 0;}
+						else if (words[5].equals("in")){action.movement = 1;}
+						else if (words[5].equals("out")){action.movement = 2;}
+						else if (words[5].equals("close")){action.movement = 3;}
+						else{
+							Serial.println(F("Incorrect action. /usage to help.")); 
+							clearNextAction();
+							return;
+						}
+						if(words[6].equals("")){
+							if((words[1].toInt() + words[3].toInt()) == npets){
+								action.npetsIn = words[3].toInt();
+								action.npetsOut = words[1].toInt();
+							}
+							else{
+								Serial.print(F("Bad number of pets. The quantity of in/out pets should be "));
+								Serial.print(npets);
+								Serial.println(".");
+								clearNextAction();
+								return;
+							}
+						}
+						else{
+							Serial.println(F("Something weird after command. /usage to help."));  
+							clearNextAction();
+							return;
+						}
+					}
+					else{
+						Serial.println(F("Incorrect command. /usage to help.")); 
+						clearNextAction();
+						return;
+					}
+					
+				}
+				else{
+					Serial.println(F("Incorrect command. /usage to help.")); 
+					clearNextAction();
+					return;
+				}
+			}
+			else{
+				Serial.println(F("Incorrect command. /usage to help.")); 
+				clearNextAction();
+				return;
+			}
+		}
+		else{
+			Serial.println(F("Incorrect command. /usage to help.")); 
+			clearNextAction();
+			return;
+		}
+	
+	}
+	else if (words[0].equals("/usage")){
+		if(words[2].equals("")){showUsage();}
+		else{
+			Serial.println(F("Something weird after command. /usage to help."));  
+			clearCommand();
+			return;
+		}
+		
+		
+	}
+	else{
+		Serial.println(F("Incorrect command. /usage to help."));
+		clearCommand();
+		return;
+	}
   
 }
 
 void showUsage(){
-  Serial.println("USAGE:");
-  Serial.println("Available commands are : /now /program /usage");
-  Serial.println(" - /now {action}: When no pet is crossing the door performs the desired action.");
-  Serial.println(" - /program HH:MM {action}: Program the desired action in the desired time of the day. Just one action per time.");
-  Serial.println(" - /usage: Shows this help.");
-  Serial.println("Available actions are:");
-  Serial.println(" - free: pets have free movment.");
-  Serial.println(" - in: pets can enter but not exit.");
-  Serial.println(" - out: pets can exit but not enter.");
-  Serial.println(" - close: the door is closed.");
+	Serial.println(F("USAGE:"));
+	Serial.println(F("Available commands are : /now /program /when /usage"));
+	Serial.println(F(" - /now {action}: When no pet is crossing the door performs the desired action."));
+	Serial.print(F(" - /program HH:MM {action}: Schedule the desired action in the desired time of the day (max scheduled actions = "));
+	Serial.print(MAX_SCHEDULE);
+	Serial.println(F(")."));
+	Serial.println(F(" - /program del HH:MM: Delete the programed action in the given time."));
+	Serial.println(F(" - /program show: Show scheduled commands."));
+	Serial.println(F(" - /when {allin|allout} {action}: When all pets are in or out perform the desired action."));
+	Serial.println(F(" - /when X in Y out {action}: When X pets are in and Y pets are out perform the desired action."));
+	Serial.println(F(" - /usage: Shows this help."));
+	Serial.println(F("Available actions are:"));
+	Serial.println(F(" - free: pets have free movment."));
+	Serial.println(F(" - in: pets can enter but not exit."));
+	Serial.println(F(" - out: pets can exit but not enter."));
+	Serial.println(F(" - close: the door is closed."));
 }
 
+void clearCommand(){
+	command.commandName = -1;
+	command.hour = -1;
+	command.minute = -1;
+	command.movement = -1;
+	command.modifierFlag = -1;
+}
+
+void clearNextAction(){
+	action.npetsIn = -1;
+	action.npetsOut = -1;
+	action.movement = -1;
+}
 void serialFlush(){
     while(Serial.available() > 0){
       int incomingByte = Serial.read();
     }
 }
 
-int checkIntegrity(char *st){
-  int n;
-  if(sscanf(st, "%d") == 1){
-  return atoi(st);  
-  } 
-  else return -1;
+int checkDateIntegrity(String st){
+	
+	int h=-1;
+	int m=-1;
+	String aux = "0";
+	
+	//not correct length
+	if((st.length() != 4) && (st.length() != 5)) {return -1;}
+	
+	//if no zero before we should add it
+	if(st.length() == 4) {aux.concat(st);}
+	else {
+		aux = st;
+		if(!isDigit(aux.charAt(0))) {return -1;}
+	}
+	if(!isDigit(aux.charAt(1))) {return -1;}
+	if(!(aux.charAt(2) == ':') || (aux.charAt(2) == '.')) {return -1;}
+	if(!isDigit(aux.charAt(3))) {return -1;}
+	if(!isDigit(aux.charAt(4))) {return -1;}
+	
+	h = aux.substring(0,2).toInt();
+	m = aux.substring(3,5).toInt();
+	
+	if(h >= 0 && h < 24 && m >= 0 && m < 60){
+		command.hour = h;
+		command.minute = m;
+		return 0;
+	} 
+
+}
+
+int stringToInt( String st) {
+    int val;
+    char *next;
+	char aux[10];
+	st.toCharArray(aux,10);
+
+        val = strtol (aux, &next, 10);
+
+        // Check for empty string and characters left after conversion.
+
+        if ((next == "") || (*next != '\0')) {
+            return -1;
+        } else {
+            return val;
+        }
+
 }

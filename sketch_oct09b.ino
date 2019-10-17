@@ -2,12 +2,25 @@
 #include <Servo.h>
 //#include "ParseInput.h"
 
-typedef struct command {
-  int commandName;
-  int hour;
-  int minute;
-  int movement;
-} commandIssued; //jjjhgk
+typedef struct commandIssued {
+	int commandName = -1; // 0 = now, 1 = program
+	int hour = -1;
+	int minute = -1;
+	int movement = -1; // 0 = free, 1 = in, 2 = out, 3 = close
+	int modifierFlag = -1;
+} commandIssued; 
+
+typedef struct nextAction {
+	int npetsIn = -1;
+	int npetsOut = -1;
+	int movement = -1; // 0 = free, 1 = in, 2 = out, 3 = close
+} nextAction;
+
+typedef struct scheduleItem {
+	unsigned char hour;
+	unsigned char minute;
+	signed char movement = -1;
+} shceduleItem;
 
 //constants
 int const buttonPin0 = 2;
@@ -20,69 +33,244 @@ int const ledPin = 13;
 int const servoOpen = 0;
 int const servoClose = 90;
 
+int const MAX_SCHEDULE = 50;
+
 //hardcoded!!!
 int const npets = 3;
 
 //variables
 int buttonState0, buttonState1 = 0;
-int servoState0, servoState1 = 0;
+int servoState0, servoState1;
 int npetsIn = npets;
 int npetsOut = 0;
-commandIssued command;
+volatile commandIssued command;
+volatile nextAction action;
 
 Servo Servo0;
 Servo Servo1;
 
+scheduleItem schedule[MAX_SCHEDULE];
+int nschedule = 0;
+
 void setup() {
-  // initialize servos  
-  Servo0.attach(servoPin0);
-  Servo1.attach(servoPin1);
-  Servo0.write(servoOpen);
-  Servo1.write(servoOpen);
-  delay(2000);
-  Servo0.write(servoClose);
-  Servo1.write(servoClose);
-  delay(2000);
-  Servo0.detach();
-  Servo1.detach();
+	// initialize servos  
+	Servo0.attach(servoPin0);
+	Servo1.attach(servoPin1);
+	Servo0.write(servoOpen);
+	Servo1.write(servoOpen);
+	servoState0 = servoOpen;
+	servoState1 = servoOpen;
+	delay(2000);
+	Servo0.detach();
+	Servo1.detach();
 
-  //initialize led
-  pinMode(ledPin, OUTPUT);
+	//initialize led
+	pinMode(ledPin, OUTPUT);
 
-  //initialize serial
-  Serial.begin(9600);
+	//initialize serial
+	Serial.begin(9600);
 
-  //initalitze interrupts
-  attachInterrupt(digitalPinToInterrupt(buttonPin0), buttonPressed0, RISING);
-  attachInterrupt(digitalPinToInterrupt(buttonPin1), buttonPressed1, RISING);
+	//initalitze interrupts
+	attachInterrupt(digitalPinToInterrupt(buttonPin0), buttonPressed0, RISING);
+	attachInterrupt(digitalPinToInterrupt(buttonPin1), buttonPressed1, RISING);
 
-  //initialize wifi module
+	//initialize wifi module
 
-  //initialize date module
+	//initialize date module
 
 
 }
 
 void loop() {
-
-
-	command = parseInput();
-	if(command.commandName != -1){
-		Serial.print("You entered: /");
-		if(command.commandName ==0){Serial.print("now ");}
-		else if (command.commandName ==1){Serial.print("program ");}
-		if(command.hour != -1){
-			Serial.print(command.hour);
-			Serial.print(":");
-			Serial.print(command.minute);
-			Serial.print(" ");
+	
+	if(action.movement != -1){
+		Serial.print("You entered: /when ");
+		if((action.npetsIn + action.npetsOut) == npets){
+			if(npetsIn == 0){
+				Serial.print("allout ");
+			}
+			else if(npetsIn != 0){
+				Serial.print(action.npetsIn);
+				Serial.print(" in ");
+				Serial.print(action.npetsOut);
+				Serial.print(" out ");
+			}
+			else{
+				Serial.print("allin ");
+			}
 		}
-		if(command.movement == 0){Serial.println("free");}
-		else if(command.movement == 1){Serial.println("in");}
-		else if(command.movement == 2){Serial.println("out");}
-		else if(command.movement == 3){Serial.println("close");}
+		if(action.movement == 0){Serial.println("free");}
+		else if(action.movement == 1){Serial.println("in");}
+		else if(action.movement == 2){Serial.println("out");}
+		else if(action.movement == 3){Serial.println("close");}
 	}
-	delay(500);
+
+
+
+	if(command.commandName == 0){
+		Serial.print(F("You entered: /now "));
+		if(command.movement == 0){
+			Serial.println(F("free"));
+			if(servoState0 == servoOpen){
+				//servo is already open
+			}
+			else{
+				Servo0.attach(servoPin0);
+				Servo0.write(servoOpen);
+				servoState0 = servoOpen;
+			}
+			if(servoState1 == servoOpen){
+				
+			}
+			else{
+				Servo1.attach(servoPin1);
+				Servo1.write(servoOpen);
+				servoState1 = servoOpen;
+			}
+		}
+		//in (servo0 = open and servo1 = close)
+		else if(command.movement == 1){
+			Serial.println(F("in"));
+			if(servoState0 == servoOpen){
+				//servo is already open
+			}
+			else{
+				Servo0.attach(servoPin0);
+				Servo0.write(servoOpen);
+				servoState0 = servoOpen;
+			}
+			if(servoState1 == servoOpen){
+				Servo1.attach(servoPin1);
+				Servo1.write(servoClose);
+				servoState1 = servoClose;
+			}
+			else{
+				
+			}
+		}
+		//out (servo0 = close and servo1 = open)
+		else if(command.movement == 2){
+			Serial.println(F("out"));
+			if(servoState0 == servoOpen){
+				Servo0.attach(servoPin0);
+				Servo0.write(servoClose);
+				servoState0 = servoClose;
+			}
+			else{
+				
+			}
+			if(servoState1 == servoOpen){
+				
+			}
+			else{
+				Servo1.attach(servoPin1);
+				Servo1.write(servoOpen);
+				servoState1 = servoOpen;
+			}
+		}
+		//close (servo0 = close and servo 1 = close)
+		else if(command.movement == 3){
+			Serial.println(F("close"));
+			if(servoState0 == servoOpen){
+				Servo0.attach(servoPin0);
+				Servo0.write(servoClose);
+				servoState0 = servoClose;
+			}
+			else{
+				
+			}
+			if(servoState1 == servoOpen){
+				Servo1.attach(servoPin1);
+				Servo1.write(servoClose);
+				servoState1 = servoClose;
+			}
+			else{
+				
+			}
+		}
+		//wait servos movment
+		delay(2000);
+		//detach if proceed
+		if(Servo0.attached()){Servo0.detach();}
+		if(Servo1.attached()){Servo1.detach();}
+		//command done so clear it
+		clearCommand();
+	}
+	
+	if(command.commandName == 1){
+		if(command.modifierFlag == 2){
+			Serial.println(F("You entered: /program show"));
+			if(nschedule >0){
+				Serial.println(F("Stored commands:"));
+				Serial.println(F(" Hour   Command"));
+				Serial.println(F("----------------"));
+				for(int i=0;i<MAX_SCHEDULE;i++){
+					if(schedule[i].movement != -1){
+						Serial.print(" ");
+						Serial.print(schedule[i].hour);
+						Serial.print(":");
+						Serial.print(schedule[i].minute);
+						Serial.print("  ");
+						if(schedule[i].movement == 0){Serial.println("free");}
+						else if(schedule[i].movement == 1){Serial.println("in");}
+						else if(schedule[i].movement == 2){Serial.println("out");}
+						else if(schedule[i].movement == 3){Serial.println("close");}
+					}
+				}
+			}
+			else{
+				Serial.println("No scheduled commands.");
+			}
+		}
+		else{
+			signed char found = -1;
+			for(int i=0;i<MAX_SCHEDULE;i++){
+				if((schedule[i].hour == command.hour) && (schedule[i].minute == command.minute) && (schedule[i].movement != -1)){
+					found = i;
+				}
+			}
+
+			if(command.modifierFlag == 0){
+				Serial.print(F("You entered: /program "));
+				Serial.print(command.hour);
+				Serial.print(F(":"));
+				Serial.print(command.minute);
+				if(command.movement == 0){Serial.println(F(" free"));}
+				else if(command.movement == 1){Serial.println(F(" in"));}
+				else if(command.movement == 2){Serial.println(F(" out"));}
+				else if(command.movement == 3){Serial.println(F(" close"));}
+				if(found == -1){
+					for(int i=0;i<MAX_SCHEDULE;i++){
+						if(schedule[i].movement == -1){
+							schedule[nschedule].hour = command.hour;
+							schedule[nschedule].minute = command.minute;
+							schedule[nschedule].movement = command.movement;
+							nschedule++;
+							break;
+						}
+					}
+				}
+				else{
+					Serial.println("You already have a scheduled command at that time. Delete it before.");
+				}
+			}
+			else if(command.modifierFlag == 1){
+				Serial.print(F("You entered: /program del "));
+				Serial.print(command.hour);
+				Serial.print(F(":"));
+				Serial.println(command.minute);
+				if(found != -1){
+					schedule[found].movement = -1;
+					nschedule--;
+				}
+				else{
+					Serial.println("Schedule to delete not found. Use \"/program show\" to see stored commands.");
+				}
+			}
+		}
+	}
+
+
 
   /*buttonState0 = digitalRead(buttonPin0);
   buttonState1 = digitalRead(buttonPin1);
@@ -112,17 +300,45 @@ void loop() {
 
 
 
-
+	clearCommand();
+	clearNextAction();
+	delay(500);
   
 }
 
-  void buttonPressed0(){
-    Serial.println("Button 0: Pressed");
-    
-    //if(SomethingToDo()){
-    //  }
-  }
+//in->out button
+void buttonPressed0(){
+	if(npetsIn > 0) {
+		npetsIn--;
+		npetsOut++;
+	}
+	Serial.print("Button IN->OUT pressed. Pets IN: ");
+	Serial.print(npetsIn);
+	Serial.print(". Pets OUT: ");
+	Serial.print(npetsOut);
+	Serial.println(".");
 
-  void buttonPressed1(){
-    Serial.println("Button 1: Pressed");
-  }
+
+//if(SomethingToDo()){
+//  }
+}
+
+//out->in button
+void buttonPressed1(){
+	if(npetsOut > 0) {
+		npetsOut--;
+		npetsIn++;
+	}
+	Serial.print("Button OUT->IN pressed. Pets IN: ");
+	Serial.print(npetsIn);
+	Serial.print(". Pets OUT: ");
+	Serial.print(npetsOut);
+	Serial.println(".");
+
+}
+
+
+
+
+
+
