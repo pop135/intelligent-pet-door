@@ -14,16 +14,16 @@ int const MAX_WORDS = 6;
 void serialEvent(){
 
 	//maintain until processcommands not implemented
-	command.commandName = -1;
-	command.hour = -1;
-	command.minute = -1;
-	command.movement = -1;
-	command.modifierFlag = -1;
+	//command.commandName = -1;
+	//command.hour = -1;
+	//command.minute = -1;
+	//command.movement = -1;
+	//command.modifierFlag = -1;
 	
 	//maintain until process when not implemented
-	action.movement = -1;
-	action.npetsIn = -1;
-	action.npetsOut = -1;
+	//action.movement = -1;
+	//action.npetsIn = -1;
+	//action.npetsOut = -1;
   
 
 	int endFirstWord = 0;
@@ -143,43 +143,65 @@ void serialEvent(){
 		}
 	}
 	else if(words[0].equals("/when")){
+		int actionIssued = action.movement;
+		int movement;
 		if(words[1].equals("allin")){
-			if(words[2].equals("free")){action.movement = 0;}
-			else if (words[2].equals("in")){action.movement = 1;}
-			else if (words[2].equals("out")){action.movement = 2;}
-			else if (words[2].equals("close")){action.movement = 3;}
+			if(words[2].equals("free")){movement = 0;}
+			else if (words[2].equals("in")){movement = 1;}
+			else if (words[2].equals("out")){movement = 2;}
+			else if (words[2].equals("close")){movement = 3;}
 			else{
 				Serial.println(F("Incorrect action. /usage to help.")); 
-				clearNextAction();
 				return;
 			}
 			if(words[3].equals("")){
-				action.npetsIn = npets;
-				action.npetsOut = 0;
+				if(actionIssued == -1){
+					Serial.print(F("You entered: /when allin "));
+					if(movement == 0){Serial.println("free");}
+					else if(movement == 1){Serial.println("in");}
+					else if(movement == 2){Serial.println("out");}
+					else if(movement == 3){Serial.println("close");}
+					action.movement = movement;
+					action.npetsIn = npets;
+					action.npetsOut = 0;
+				}
+				else{
+					Serial.println(F("There is a /when next action issued. Use /when show to show it or /when del to delete it. /usage to help."));  
+					return;
+				}
 			}
 			else{
 				Serial.println(F("Something weird after command. /usage to help."));  
-				clearNextAction();
 				return;
 			}
 		}
 		else if(words[1].equals("allout")){
-			if(words[2].equals("free")){action.movement = 0;}
-			else if (words[2].equals("in")){action.movement = 1;}
-			else if (words[2].equals("out")){action.movement = 2;}
-			else if (words[2].equals("close")){action.movement = 3;}
+			if(words[2].equals("free")){movement = 0;}
+			else if (words[2].equals("in")){movement = 1;}
+			else if (words[2].equals("out")){movement = 2;}
+			else if (words[2].equals("close")){movement = 3;}
 			else{
 				Serial.println(F("Incorrect action. /usage to help.")); 
-				clearNextAction();
 				return;
 			}
 			if(words[3].equals("")){
-				action.npetsIn = 0;
-				action.npetsOut = npets;
+				if(actionIssued == -1){
+					Serial.print(F("You entered: /when allout "));
+					if(movement == 0){Serial.println("free");}
+					else if(movement == 1){Serial.println("in");}
+					else if(movement == 2){Serial.println("out");}
+					else if(movement == 3){Serial.println("close");}
+					action.movement = movement;
+					action.npetsIn = 0;
+					action.npetsOut = npets;
+				}
+				else{
+					Serial.println(F("There is a \"/when\" next action issued. Use \"/when show\" to show it or \"/when del\" to delete it. /usage to help."));  
+					return;
+				}
 			}
 			else{
 				Serial.println(F("Something weird after command. /usage to help."));  
-				clearNextAction();
 				return;
 			}
 		}
@@ -187,100 +209,159 @@ void serialEvent(){
 			if(words[2].equals("in")){
 				if(stringToInt(words[3]) != -1){
 					if(words[4].equals("out")){
-						if(words[5].equals("free")){action.movement = 0;}
-						else if (words[5].equals("in")){action.movement = 1;}
-						else if (words[5].equals("out")){action.movement = 2;}
-						else if (words[5].equals("close")){action.movement = 3;}
+						if(words[5].equals("free")){movement = 0;}
+						else if (words[5].equals("in")){movement = 1;}
+						else if (words[5].equals("out")){movement = 2;}
+						else if (words[5].equals("close")){movement = 3;}
 						else{
 							Serial.println(F("Incorrect action. /usage to help.")); 
-							clearNextAction();
 							return;
 						}
 						if(words[6].equals("")){
 							if((words[1].toInt() + words[3].toInt()) == npets){
-								action.npetsIn = words[1].toInt();
-								action.npetsOut = words[3].toInt();
+								if(actionIssued == -1){
+									Serial.print(F("You entered: /when "));
+									Serial.print(words[1].toInt());
+									Serial.print(F(" in "));
+									Serial.print(words[3].toInt());
+									if(movement == 0){Serial.println(F(" out free"));}
+									else if(movement == 1){Serial.println(F("out in"));}
+									else if(movement == 2){Serial.println(F("out out"));}
+									else if(movement == 3){Serial.println(F("out close"));}
+									action.movement = movement;
+									action.npetsIn = words[1].toInt();
+									action.npetsOut = words[3].toInt();
+								}
+								else{
+									Serial.println(F("There is a \"/when\" next action issued. Use \"/when show\" to show it or \"/when del\" to delete it. /usage to help."));  
+									return;
+								}
 							}
 							else{
 								Serial.print(F("Bad number of pets. The quantity of in/out pets should be "));
 								Serial.print(npets);
 								Serial.println(".");
-								clearNextAction();
 								return;
 							}
 						}
 						else{
 							Serial.println(F("Something weird after command. /usage to help."));  
-							clearNextAction();
 							return;
 						}
 					}
 					else{
 						Serial.println(F("Incorrect command. /usage to help.")); 
-						clearNextAction();
 						return;
 					}
 					
 				}
 				else{
 					Serial.println(F("Incorrect command. /usage to help.")); 
-					clearNextAction();
 					return;
 				}
 			}
 			else if (words[2].equals("out")){
 				if(stringToInt(words[3]) != -1){
 					if(words[4].equals("in")){
-						if(words[5].equals("free")){action.movement = 0;}
-						else if (words[5].equals("in")){action.movement = 1;}
-						else if (words[5].equals("out")){action.movement = 2;}
-						else if (words[5].equals("close")){action.movement = 3;}
+						if(words[5].equals("free")){movement = 0;}
+						else if (words[5].equals("in")){movement = 1;}
+						else if (words[5].equals("out")){movement = 2;}
+						else if (words[5].equals("close")){movement = 3;}
 						else{
 							Serial.println(F("Incorrect action. /usage to help.")); 
-							clearNextAction();
 							return;
 						}
 						if(words[6].equals("")){
 							if((words[1].toInt() + words[3].toInt()) == npets){
-								action.npetsIn = words[3].toInt();
-								action.npetsOut = words[1].toInt();
+								if(actionIssued == -1){
+									Serial.print(F("You entered: /when "));
+									Serial.print(words[3].toInt());
+									Serial.print(F(" out "));
+									Serial.print(words[1].toInt());
+									if(movement == 0){Serial.println(F(" in free"));}
+									else if(movement == 1){Serial.println(F("in in"));}
+									else if(movement == 2){Serial.println(F("in out"));}
+									else if(movement == 3){Serial.println(F("in close"));}
+									action.movement = movement;
+									action.npetsIn = words[1].toInt();
+									action.npetsOut = words[3].toInt();
+								}
+								else{
+									Serial.println(F("There is a \"/when\" next action issued. Use \"/when show\" to show it or \"/when del\" to delete it. /usage to help."));  
+									return;
+								}
 							}
 							else{
 								Serial.print(F("Bad number of pets. The quantity of in/out pets should be "));
 								Serial.print(npets);
 								Serial.println(".");
-								clearNextAction();
 								return;
 							}
 						}
 						else{
 							Serial.println(F("Something weird after command. /usage to help."));  
-							clearNextAction();
 							return;
 						}
 					}
 					else{
 						Serial.println(F("Incorrect command. /usage to help.")); 
-						clearNextAction();
 						return;
 					}
 					
 				}
 				else{
 					Serial.println(F("Incorrect command. /usage to help.")); 
-					clearNextAction();
 					return;
 				}
 			}
 			else{
 				Serial.println(F("Incorrect command. /usage to help.")); 
-				clearNextAction();
+				return;
+			}
+		}
+		else if(words[1].equals("show")){
+			if(words[2].equals("")){
+				if(actionIssued != -1){
+					Serial.println(F("You entered: /when show"));
+					Serial.print(F("Next action: "));
+					if(action.movement == 0){Serial.print(F("free"));}
+					else if(action.movement == 1){Serial.print(F("in"));}
+					else if(action.movement == 2){Serial.print(F("out"));}
+					else if(action.movement == 3){Serial.print(F("close"));}
+					Serial.print(F(" when "));
+					Serial.print(action.npetsIn);
+					Serial.print(F(" IN and "));
+					Serial.print(action.npetsOut);
+					Serial.println(F(" OUT."));
+				}
+				else{
+					Serial.println(F("There is not a \"/when\" next action issued. /usage to help."));  
+					return;
+				}
+			}
+			else{
+				Serial.println(F("Something weird after command. /usage to help."));  
+				return;
+			}
+		}
+		else if(words[1].equals("del")){
+			if(words[2].equals("")){
+				if(actionIssued != -1){
+					Serial.println(F("You entered: /when del"));
+					clearNextAction();
+				}
+				else{
+					Serial.println(F("There is not a \"/when\" next action issued. /usage to help."));  
+					return;
+				}
+			}
+			else{
+				Serial.println(F("Something weird after command. /usage to help."));  
 				return;
 			}
 		}
 		else{
 			Serial.println(F("Incorrect command. /usage to help.")); 
-			clearNextAction();
 			return;
 		}
 	
@@ -289,7 +370,6 @@ void serialEvent(){
 		if(words[2].equals("")){showUsage();}
 		else{
 			Serial.println(F("Something weird after command. /usage to help."));  
-			clearCommand();
 			return;
 		}
 		
@@ -297,7 +377,6 @@ void serialEvent(){
 	}
 	else{
 		Serial.println(F("Incorrect command. /usage to help."));
-		clearCommand();
 		return;
 	}
   

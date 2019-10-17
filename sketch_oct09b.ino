@@ -83,13 +83,13 @@ void setup() {
 
 void loop() {
 	
-	if(action.movement != -1){
+	/*if(action.movement != -1){
 		Serial.print("You entered: /when ");
 		if((action.npetsIn + action.npetsOut) == npets){
-			if(npetsIn == 0){
+			if(action.npetsIn == 0){
 				Serial.print("allout ");
 			}
-			else if(npetsIn != 0){
+			else if(action.npetsIn != 0){
 				Serial.print(action.npetsIn);
 				Serial.print(" in ");
 				Serial.print(action.npetsOut);
@@ -103,7 +103,7 @@ void loop() {
 		else if(action.movement == 1){Serial.println("in");}
 		else if(action.movement == 2){Serial.println("out");}
 		else if(action.movement == 3){Serial.println("close");}
-	}
+	}*/
 
 
 
@@ -209,6 +209,7 @@ void loop() {
 						Serial.print(" ");
 						Serial.print(schedule[i].hour);
 						Serial.print(":");
+						if(schedule[i].minute<10) Serial.print(F("0"));
 						Serial.print(schedule[i].minute);
 						Serial.print("  ");
 						if(schedule[i].movement == 0){Serial.println("free");}
@@ -234,6 +235,7 @@ void loop() {
 				Serial.print(F("You entered: /program "));
 				Serial.print(command.hour);
 				Serial.print(F(":"));
+				if(command.minute<10) Serial.print(F("0"));
 				Serial.print(command.minute);
 				if(command.movement == 0){Serial.println(F(" free"));}
 				else if(command.movement == 1){Serial.println(F(" in"));}
@@ -242,9 +244,9 @@ void loop() {
 				if(found == -1){
 					for(int i=0;i<MAX_SCHEDULE;i++){
 						if(schedule[i].movement == -1){
-							schedule[nschedule].hour = command.hour;
-							schedule[nschedule].minute = command.minute;
-							schedule[nschedule].movement = command.movement;
+							schedule[i].hour = command.hour;
+							schedule[i].minute = command.minute;
+							schedule[i].movement = command.movement;
 							nschedule++;
 							break;
 						}
@@ -268,6 +270,8 @@ void loop() {
 				}
 			}
 		}
+		//command done so clear it
+		clearCommand();
 	}
 
 
@@ -301,7 +305,6 @@ void loop() {
 
 
 	clearCommand();
-	clearNextAction();
 	delay(500);
   
 }
@@ -337,7 +340,11 @@ void buttonPressed1(){
 
 }
 
-
+void somethingToDo(){
+	if(action.movement != -1){
+		
+	}
+}
 
 
 
