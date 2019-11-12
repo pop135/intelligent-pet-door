@@ -225,9 +225,9 @@ void serialEvent(){
 									Serial.print(F(" in "));
 									Serial.print(words[3].toInt());
 									if(movement == 0){Serial.println(F(" out free"));}
-									else if(movement == 1){Serial.println(F("out in"));}
-									else if(movement == 2){Serial.println(F("out out"));}
-									else if(movement == 3){Serial.println(F("out close"));}
+									else if(movement == 1){Serial.println(F(" out in"));}
+									else if(movement == 2){Serial.println(F(" out out"));}
+									else if(movement == 3){Serial.println(F(" out close"));}
 									action.movement = movement;
 									action.npetsIn = words[1].toInt();
 									action.npetsOut = words[3].toInt();
@@ -275,16 +275,16 @@ void serialEvent(){
 							if((words[1].toInt() + words[3].toInt()) == npets){
 								if(actionIssued == -1){
 									Serial.print(F("You entered: /when "));
-									Serial.print(words[3].toInt());
-									Serial.print(F(" out "));
 									Serial.print(words[1].toInt());
+									Serial.print(F(" out "));
+									Serial.print(words[3].toInt());
 									if(movement == 0){Serial.println(F(" in free"));}
-									else if(movement == 1){Serial.println(F("in in"));}
-									else if(movement == 2){Serial.println(F("in out"));}
-									else if(movement == 3){Serial.println(F("in close"));}
+									else if(movement == 1){Serial.println(F(" in in"));}
+									else if(movement == 2){Serial.println(F(" in out"));}
+									else if(movement == 3){Serial.println(F(" in close"));}
 									action.movement = movement;
-									action.npetsIn = words[1].toInt();
-									action.npetsOut = words[3].toInt();
+									action.npetsIn = words[3].toInt();
+									action.npetsOut = words[1].toInt();
 								}
 								else{
 									Serial.println(F("There is a \"/when\" next action issued. Use \"/when show\" to show it or \"/when del\" to delete it. /usage to help."));  
@@ -366,8 +366,17 @@ void serialEvent(){
 		}
 	
 	}
+	else if(words[0].equals("/where")){
+		if(words[1].equals("")){
+			command.commandName = 2;
+		}
+		else{
+			Serial.println(F("Something weird after command. /usage to help."));  
+			return;
+		}
+	}
 	else if (words[0].equals("/usage")){
-		if(words[2].equals("")){showUsage();}
+		if(words[1].equals("")){showUsage();}
 		else{
 			Serial.println(F("Something weird after command. /usage to help."));  
 			return;
@@ -448,6 +457,9 @@ int checkDateIntegrity(String st){
 		command.minute = m;
 		return 0;
 	} 
+  else{
+    return -1;
+  }
 
 }
 
