@@ -17,6 +17,7 @@ void checkSchedule(){
 		
 
 		dayOfWeek = time.dayOfTheWeek();
+		if(dayOfWeek == 0) dayOfWeek = 7;
 		hour = time.hour();
 
 		

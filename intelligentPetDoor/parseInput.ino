@@ -97,8 +97,21 @@ void serialEvent(){
 		}
 		
 		if (words[1].equals("del")){
-			command.modifierFlag = 1;
-			modifierFlag = 1;
+			if(words[2].equals("all")){
+				if(words[3].equals("")){
+					command.modifierFlag = 3;
+					return;
+				}
+				else{
+					Serial.println(F("Something weird after command. /usage to help."));  
+					clearCommand();
+					return;
+				}
+			}
+			else{
+				command.modifierFlag = 1;
+				modifierFlag = 1;
+			}
 		}
 		command.day = stringToInt(words[1+modifierFlag]);
 		if((command.day >= 1) && (command.day <=7)) {
@@ -110,7 +123,7 @@ void serialEvent(){
 					else if (words[3+modifierFlag].equals("out")){command.movement = 2;}
 					else if (words[3+modifierFlag].equals("close")){command.movement = 3;}
 					else{
-						Serial.println(F("Incorrect action. /usage to help.")); 
+						Serial.println(F("Incorrect or missing action. /usage to help.")); 
 						clearCommand();
 						return;
 					}

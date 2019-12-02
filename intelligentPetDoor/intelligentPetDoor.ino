@@ -106,7 +106,6 @@ void setup() {
 		}
 	}
 
-
 	//initialize date stuff
 	rtc.begin();
 	minuteBefore = (rtc.now()).minute()-1;

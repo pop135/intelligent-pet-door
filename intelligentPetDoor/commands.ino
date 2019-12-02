@@ -66,11 +66,28 @@ void program(){
 			}
 		}
 		else{
-			Serial.println("No scheduled commands.");
+			Serial.println(F("No scheduled commands."));
+		}
+	}
+	else if(command.modifierFlag == 3){
+		Serial.println(F("You entered: /program del all"));
+		if(nschedule > 0){
+			for(int i=2;i<(MAX_SCHEDULE*2);i=i+2){
+				schedule1 = EEPROM.read(i);
+				if((schedule1&0x3F) != 0x3F){
+					EEPROM.write(i,0x3F);
+					nschedule--;
+					if(nschedule==0) break;
+				}
+			}
+		}
+		else{
+			Serial.println(F("No scheduled commands."));
 		}
 	}
 	else{
 		signed char found = -1;
+		char loopBreaker=0;
 		for(int i=2;i<(MAX_SCHEDULE*2);i=i+2){
 			schedule1 = EEPROM.read(i);
 			if((schedule1&0x3F) != 0x3F){
@@ -82,6 +99,8 @@ void program(){
 				if((day == command.day) && (hour == command.hour) && (minute == command.minute)){
 					found = i;
 				}
+				loopBreaker++;
+				if(loopBreaker == nschedule) break;
 			}
 		}
 		/*for(int i=0;i<MAX_SCHEDULE;i++){
