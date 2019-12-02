@@ -60,10 +60,14 @@ int nschedule=0;
 
 RTC_DS3231 rtc;
 
+///checkschedule variables to allow only one check per minute
 int minuteBefore;
 unsigned long startMillis;  //some global variables available anywhere in the program
 unsigned long currentMillis;
 const unsigned long period = 1000;  //the value is a number of milliseconds
+
+//debounce
+
 
 //setup
 void setup() {
@@ -93,7 +97,7 @@ void setup() {
 	servoState2 = servoOpen;
 
 	//initalitze interrupts
-	attachInterrupt(digitalPinToInterrupt(buttonPin0), buttonInOutISR, RISING);
+	attachInterrupt(digitalPinToInterrupt(buttonPin0), buttonInOutISR, FALLING);
 	attachInterrupt(digitalPinToInterrupt(buttonPin1), buttonOutInISR, RISING);
 
 	//initialize serial
@@ -126,6 +130,7 @@ void loop() {
 	checkCommand();
 	checkNextAction();
 	checkSchedule();
+	checkButtonsISR();
 
 	//delay(100);
   
