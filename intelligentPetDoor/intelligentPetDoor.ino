@@ -43,7 +43,7 @@ int const servoClose0 = 0;
 int const MAX_SCHEDULE = 100;
 
 
-int const npets = 1; //hardcoded!!!
+int const npets = 2; //hardcoded!!!
 
 //variables
 int buttonState0, buttonState1 = 0;
