@@ -1,4 +1,4 @@
-#define TIME_BETWEN_DE_AND_NA	( 5000 )
+#define TIME_BETWEN_DE_AND_NA	( 2000 )
 
 extern unsigned long doorEventEnd;
 

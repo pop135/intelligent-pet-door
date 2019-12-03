@@ -1,8 +1,8 @@
 #define DEBUG 1
 
-#define RESET_DEBOUNCE_FLAG_TIME_MS	( 4000 )
-#define DEBOUNCE_CLOSING_TIME_MS	( 3000 )
-#define DEBOUNCE_OPENING_TIME_MS	( 3000 )
+#define RESET_DEBOUNCE_FLAG_TIME_MS	( 2000 )
+#define DEBOUNCE_CLOSING_TIME_MS	( 2000 )
+#define DEBOUNCE_OPENING_TIME_MS	( 800 )
 
 volatile unsigned long lastButtonISRTime=0;
 volatile unsigned long buttonISRTime=0;
@@ -31,16 +31,22 @@ void checkButtonsISR(){
 		outInFlag=0;
 	}
 	
-	if((doorEventStart != 0) && (millis()-doorEventStart) > RESET_DEBOUNCE_FLAG_TIME_MS){
+	if((doorEventStart != 0) && ((millis()-doorEventStart) > RESET_DEBOUNCE_FLAG_TIME_MS)) {
 		
-		attachInterrupt(digitalPinToInterrupt(buttonPin0), buttonInOutISR, FALLING);
-		attachInterrupt(digitalPinToInterrupt(buttonPin1), buttonOutInISR, RISING);
-		doorEventStart = 0;
-		debounceFlag = 0;
-		doorEventEnd = millis();
-		#ifdef DEBUG
-			Serial.println("DOOR EVENT ENDED");
-		#endif
+		
+		if((digitalRead(buttonPin0) == HIGH) && (digitalRead(buttonPin1) == HIGH)){
+			//attachInterrupt(digitalPinToInterrupt(buttonPin0), buttonInOutISR, FALLING);
+			//attachInterrupt(digitalPinToInterrupt(buttonPin1), buttonOutInISR, RISING);
+			doorEventStart = 0;
+			debounceFlag = 0;
+			doorEventEnd = millis();
+			#ifdef DEBUG
+				Serial.println("DOOR EVENT ENDED");
+			#endif
+		}
+		else{
+			doorEventStart = millis();
+		}
 
 	}
 	
@@ -51,14 +57,14 @@ void checkButtonsISR(){
 //in->out button
 void buttonInOut(){
 	
-	if(doorEventStart == 0){
+	//if(doorEventStart == 0){
 		doorEventStart = millis();
 		doorEventEnd = 0;
 		#ifdef DEBUG
-			Serial.println("DOOR EVENT STARTED");
+			//Serial.println("DOOR EVENT STARTED");
 		#endif
 		
-	}
+	//}
 	
 	#ifdef DEBUG
 		Serial.print(count,DEC);
@@ -163,13 +169,13 @@ void buttonInOut(){
 //out->in button
 void buttonOutIn(){
 	
-		if(doorEventStart == 0){
+	//if(doorEventStart == 0){
 		doorEventStart = millis();
 		doorEventEnd = 0;
 		#ifdef DEBUG
-			Serial.println("DOOR EVENT STARTED");
+			//Serial.println("DOOR EVENT STARTED");
 		#endif
-	}
+	//}
 	
 	#ifdef DEBUG
 		Serial.print(count,DEC);

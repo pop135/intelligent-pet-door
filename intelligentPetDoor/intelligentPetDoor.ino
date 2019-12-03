@@ -43,7 +43,7 @@ int const servoClose0 = 0;
 int const MAX_SCHEDULE = 100;
 
 
-int const npets = 2; //hardcoded!!!
+int const npets = 1; //hardcoded!!!
 
 //variables
 int buttonState0, buttonState1 = 0;
@@ -76,7 +76,7 @@ void setup() {
 	Servo1.attach(servoPin1);
 	Servo2.attach(servoPin2);
 	
-	Servo0.write(servoClose180);
+	/*Servo0.write(servoClose180);
 	Servo1.write(servoClose0);
 	Servo2.write(servoClose180);
 	
@@ -86,7 +86,7 @@ void setup() {
 	Servo1.write(servoOpen);
 	Servo2.write(servoOpen);
 
-	delay(2000);
+	delay(2000);*/
 
 	//Servo0.detach();
 	//Servo1.detach();
@@ -98,7 +98,7 @@ void setup() {
 
 	//initalitze interrupts
 	attachInterrupt(digitalPinToInterrupt(buttonPin0), buttonInOutISR, FALLING);
-	attachInterrupt(digitalPinToInterrupt(buttonPin1), buttonOutInISR, RISING);
+	attachInterrupt(digitalPinToInterrupt(buttonPin1), buttonOutInISR, FALLING);
 
 	//initialize serial
 	Serial.begin(9600);
@@ -121,6 +121,10 @@ void setup() {
 
 	//initialize wifi module
 	
+	Serial.print("buttonPin0 (IN->OUT): ");
+	Serial.print(digitalRead(buttonPin0));
+	Serial.print(" buttonPin1 (OUT->IN): ");
+	Serial.println(digitalRead(buttonPin1));
 
 
 }
