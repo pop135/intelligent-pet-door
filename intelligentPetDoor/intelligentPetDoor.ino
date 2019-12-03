@@ -10,14 +10,14 @@ typedef struct commandIssued {
 	int day = -1;
 	int hour = -1;
 	int minute = -1;
-	int movement = -1; // 0 = free, 1 = in, 2 = out, 3 = close
+	int movement = -1; // 0 = open, 1 = in, 2 = out, 3 = close
 	int modifierFlag = -1;
 } commandIssued; 
 
 typedef struct nextAction {
 	int npetsIn = -1;
 	int npetsOut = -1;
-	int movement = -1; // 0 = free, 1 = in, 2 = out, 3 = close
+	int movement = -1; // 0 = open, 1 = in, 2 = out, 3 = close
 } nextAction;
 
 typedef struct scheduleItem {

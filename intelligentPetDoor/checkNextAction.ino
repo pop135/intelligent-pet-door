@@ -13,8 +13,8 @@ void checkNextAction(){
 		
 		Serial.print("Conditions met. Programmed action ");
 		if(action.movement == 0){
-			Serial.print(F("free"));
-			free();
+			Serial.print(F("open"));
+			open();
 		}
 		//in (servo0 = open and servo1 = close)
 		else if(action.movement == 1){
@@ -32,6 +32,7 @@ void checkNextAction(){
 			close();
 		}
 		Serial.println(" done.");
+		
 		//command done so clear it
 		clearNextAction();
 	}

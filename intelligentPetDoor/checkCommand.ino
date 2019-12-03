@@ -10,8 +10,8 @@ void checkCommand(){
 void now(){
 	Serial.print(F("You entered: /now "));
 	if(command.movement == 0){
-		Serial.println(F("free"));
-		free();
+		Serial.println(F("open"));
+		open();
 	}
 	//in (servo0 = open and servo1 = close)
 	else if(command.movement == 1){
@@ -58,7 +58,7 @@ void program(){
 					if(minute<10) Serial.print(F("0"));
 					Serial.print(minute);
 					Serial.print("   ");
-					if(movement == 0){Serial.println("free");}
+					if(movement == 0){Serial.println("open");}
 					else if(movement == 1){Serial.println("in");}
 					else if(movement == 2){Serial.println("out");}
 					else if(movement == 3){Serial.println("close");}
@@ -117,7 +117,7 @@ void program(){
 			Serial.print(F(":"));
 			if(command.minute<10) Serial.print(F("0"));
 			Serial.print(command.minute);
-			if(command.movement == 0){Serial.println(F(" free"));}
+			if(command.movement == 0){Serial.println(F(" open"));}
 			else if(command.movement == 1){Serial.println(F(" in"));}
 			else if(command.movement == 2){Serial.println(F(" out"));}
 			else if(command.movement == 3){Serial.println(F(" close"));}

@@ -1,4 +1,4 @@
-void free(){
+void open(){
 	if(servoState0 == servoOpen){
 		//servo is already open
 	}

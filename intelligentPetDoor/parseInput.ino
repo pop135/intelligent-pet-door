@@ -66,7 +66,7 @@ void serialEvent(){
 	//actually understanding the word
 	if(words[0].equals("/now")){
 		command.commandName = 0;
-		if(words[1].equals("free")){command.movement = 0;}
+		if(words[1].equals("open")){command.movement = 0;}
 		else if (words[1].equals("in")){command.movement = 1;}
 		else if (words[1].equals("out")){command.movement = 2;}
 		else if (words[1].equals("close")){command.movement = 3;}
@@ -118,7 +118,7 @@ void serialEvent(){
 			if (checkDateIntegrity(words[2+modifierFlag]) == 0){
 				if(!modifierFlag){
 					command.modifierFlag = 0;
-					if(words[3+modifierFlag].equals("free")){command.movement = 0;}
+					if(words[3+modifierFlag].equals("open")){command.movement = 0;}
 					else if (words[3+modifierFlag].equals("in")){command.movement = 1;}
 					else if (words[3+modifierFlag].equals("out")){command.movement = 2;}
 					else if (words[3+modifierFlag].equals("close")){command.movement = 3;}
@@ -152,7 +152,7 @@ void serialEvent(){
 		int actionIssued = action.movement;
 		int movement;
 		if(words[1].equals("allin")){
-			if(words[2].equals("free")){movement = 0;}
+			if(words[2].equals("open")){movement = 0;}
 			else if (words[2].equals("in")){movement = 1;}
 			else if (words[2].equals("out")){movement = 2;}
 			else if (words[2].equals("close")){movement = 3;}
@@ -163,7 +163,7 @@ void serialEvent(){
 			if(words[3].equals("")){
 				if(actionIssued == -1){
 					Serial.print(F("You entered: /when allin "));
-					if(movement == 0){Serial.println("free");}
+					if(movement == 0){Serial.println("open");}
 					else if(movement == 1){Serial.println("in");}
 					else if(movement == 2){Serial.println("out");}
 					else if(movement == 3){Serial.println("close");}
@@ -182,7 +182,7 @@ void serialEvent(){
 			}
 		}
 		else if(words[1].equals("allout")){
-			if(words[2].equals("free")){movement = 0;}
+			if(words[2].equals("open")){movement = 0;}
 			else if (words[2].equals("in")){movement = 1;}
 			else if (words[2].equals("out")){movement = 2;}
 			else if (words[2].equals("close")){movement = 3;}
@@ -193,7 +193,7 @@ void serialEvent(){
 			if(words[3].equals("")){
 				if(actionIssued == -1){
 					Serial.print(F("You entered: /when allout "));
-					if(movement == 0){Serial.println("free");}
+					if(movement == 0){Serial.println("open");}
 					else if(movement == 1){Serial.println("in");}
 					else if(movement == 2){Serial.println("out");}
 					else if(movement == 3){Serial.println("close");}
@@ -215,7 +215,7 @@ void serialEvent(){
 			if(words[2].equals("in")){
 				if(stringToInt(words[3]) != -1){
 					if(words[4].equals("out")){
-						if(words[5].equals("free")){movement = 0;}
+						if(words[5].equals("open")){movement = 0;}
 						else if (words[5].equals("in")){movement = 1;}
 						else if (words[5].equals("out")){movement = 2;}
 						else if (words[5].equals("close")){movement = 3;}
@@ -230,7 +230,7 @@ void serialEvent(){
 									Serial.print(words[1].toInt());
 									Serial.print(F(" in "));
 									Serial.print(words[3].toInt());
-									if(movement == 0){Serial.println(F(" out free"));}
+									if(movement == 0){Serial.println(F(" out open"));}
 									else if(movement == 1){Serial.println(F(" out in"));}
 									else if(movement == 2){Serial.println(F(" out out"));}
 									else if(movement == 3){Serial.println(F(" out close"));}
@@ -269,7 +269,7 @@ void serialEvent(){
 			else if (words[2].equals("out")){
 				if(stringToInt(words[3]) != -1){
 					if(words[4].equals("in")){
-						if(words[5].equals("free")){movement = 0;}
+						if(words[5].equals("open")){movement = 0;}
 						else if (words[5].equals("in")){movement = 1;}
 						else if (words[5].equals("out")){movement = 2;}
 						else if (words[5].equals("close")){movement = 3;}
@@ -284,7 +284,7 @@ void serialEvent(){
 									Serial.print(words[1].toInt());
 									Serial.print(F(" out "));
 									Serial.print(words[3].toInt());
-									if(movement == 0){Serial.println(F(" in free"));}
+									if(movement == 0){Serial.println(F(" in open"));}
 									else if(movement == 1){Serial.println(F(" in in"));}
 									else if(movement == 2){Serial.println(F(" in out"));}
 									else if(movement == 3){Serial.println(F(" in close"));}
@@ -330,7 +330,7 @@ void serialEvent(){
 				if(actionIssued != -1){
 					Serial.println(F("You entered: /when show"));
 					Serial.print(F("Next action: "));
-					if(action.movement == 0){Serial.print(F("free"));}
+					if(action.movement == 0){Serial.print(F("open"));}
 					else if(action.movement == 1){Serial.print(F("in"));}
 					else if(action.movement == 2){Serial.print(F("out"));}
 					else if(action.movement == 3){Serial.print(F("close"));}
@@ -410,7 +410,7 @@ void showUsage(){
 	Serial.println(F(" - /when X in Y out {action}: When X pets are in and Y pets are out perform the desired action."));
 	Serial.println(F(" - /usage: Shows this help."));
 	Serial.println(F("Available actions are:"));
-	Serial.println(F(" - free: pets have free movment."));
+	Serial.println(F(" - open: pets have open movment."));
 	Serial.println(F(" - in: pets can enter but not exit."));
 	Serial.println(F(" - out: pets can exit but not enter."));
 	Serial.println(F(" - close: the door is closed."));

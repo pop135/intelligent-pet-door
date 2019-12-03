@@ -40,7 +40,7 @@ void checkSchedule(){
 				
 				if((dayOfWeek == scheduledDayOfWeek) && (hour == scheduledHour) && (minute == scheduledMinute)){
 					
-					if(movement == 0) {free();Serial.println(F(" -> Found a free scheduled command."));}
+					if(movement == 0) {open();Serial.println(F(" -> Found a open scheduled command."));}
 					else if(movement == 1) {in();Serial.println(F(" -> Found a in scheduled command."));}
 					else if(movement == 2) {out();Serial.println(F(" -> Found a out scheduled command."));}
 					else {close();Serial.println(F(" -> Found a close scheduled command."));}
