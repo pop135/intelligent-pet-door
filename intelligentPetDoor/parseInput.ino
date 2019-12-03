@@ -1,3 +1,7 @@
+void initSerial(){
+	Serial.begin(9600);
+}
+
 void serialEvent(){
 
 	//maintain until processcommands not implemented
@@ -426,11 +430,6 @@ void clearCommand(){
 	command.modifierFlag = -1;
 }
 
-void clearNextAction(){
-	action.npetsIn = -1;
-	action.npetsOut = -1;
-	action.movement = -1;
-}
 void serialFlush(){
     while(Serial.available() > 0){
       int incomingByte = Serial.read();
