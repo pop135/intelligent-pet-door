@@ -14,6 +14,9 @@ volatile char outInFlag=0;
 unsigned long doorEventStart=0;
 unsigned long doorEventEnd=0;
 
+int npetsIn = npets;
+int npetsOut = 0;
+
 #ifdef DEBUG
 	volatile int count=0;
 #endif
@@ -34,7 +37,7 @@ void checkButtonsISR(){
 	if((doorEventStart != 0) && ((millis()-doorEventStart) > RESET_DEBOUNCE_FLAG_TIME_MS)) {
 		
 		
-		if((digitalRead(buttonPin0) == HIGH) && (digitalRead(buttonPin1) == HIGH)){
+		if((digitalRead(BUTTON_PIN_0) == HIGH) && (digitalRead(BUTTON_PIN_1) == HIGH)){
 			//attachInterrupt(digitalPinToInterrupt(buttonPin0), buttonInOutISR, FALLING);
 			//attachInterrupt(digitalPinToInterrupt(buttonPin1), buttonOutInISR, RISING);
 			doorEventStart = 0;

@@ -1,6 +1,17 @@
 #define TIME_BETWEN_DE_AND_NA	( 2000 )
 
-extern unsigned long doorEventEnd;
+typedef struct nextAction {
+	int npetsIn = -1;
+	int npetsOut = -1;
+	int movement = -1; // 0 = open, 1 = in, 2 = out, 3 = close
+} nextAction;
+
+/*extern unsigned long doorEventEnd;
+extern nextAction action;
+extern int npetsIn;
+extern int npetsOut;*/
+
+nextAction action;
 
 void checkNextAction(){
 	

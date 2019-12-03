@@ -1,3 +1,16 @@
+#define ONE_SECOND_MS	( 1000 )
+
+
+//checkschedule variables to allow only one check per minute
+int minuteBefore;
+unsigned long startMillis;  //some global variables available anywhere in the program
+unsigned long currentMillis;
+
+void initCheckSchedule(){
+	minuteBefore = (rtc.now()).minute()-1;
+	startMillis=millis();
+}
+
 void checkSchedule(){
 	
 	unsigned char schedule1,schedule2;
@@ -5,7 +18,7 @@ void checkSchedule(){
 	int schedulesFound=0;
 
 	currentMillis=millis();
-	if((nschedule != 0) && (currentMillis - startMillis >= period)){
+	if((nschedule != 0) && (currentMillis - startMillis >= ONE_SECOND_MS)){
 		
 		startMillis = currentMillis;
 		

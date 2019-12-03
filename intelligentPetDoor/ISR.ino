@@ -1,6 +1,10 @@
-
 extern volatile char inOutFlag;
 extern volatile char outInFlag;
+
+void initISR(){
+	attachInterrupt(digitalPinToInterrupt(BUTTON_PIN_0), buttonInOutISR, FALLING);
+	attachInterrupt(digitalPinToInterrupt(BUTTON_PIN_1), buttonOutInISR, FALLING);
+}
 
 
 void buttonInOutISR(){

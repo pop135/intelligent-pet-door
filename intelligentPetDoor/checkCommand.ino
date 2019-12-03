@@ -1,3 +1,15 @@
+//type definitions
+typedef struct commandIssued {
+	int commandName = -1; // 0 = now, 1 = program
+	int day = -1;
+	int hour = -1;
+	int minute = -1;
+	int movement = -1; // 0 = open, 1 = in, 2 = out, 3 = close
+	int modifierFlag = -1;
+} commandIssued; 
+
+commandIssued command;
+
 void checkCommand(){
 	if (command.commandName == 0) now();
 	else if (command.commandName == 1) program();
