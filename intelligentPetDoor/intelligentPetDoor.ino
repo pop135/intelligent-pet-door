@@ -36,7 +36,7 @@
 
 /*----------DEFINES--------------------------------------------------------------*/
 
-/* To allow debug */
+/* Uncoment this line to allow debug info to be shown througth the serial. */
 #define DEBUG 1
 
 /*----------TYPEDEFS------------------------------------------------------------*/
@@ -50,14 +50,14 @@ int npets = 1; //hardcoded!!!
 /* Common setup function in all arduino projects. Initialize all things here. */
 void setup() {
 	
+	/* Initialize Serial interface */
+	initSerial();
+	
 	/* Initialize servos */
 	initServo();
 
 	/* Initialitze sensors interrupts */
 	initISR();
-
-	/* Initialize Serial interface */
-	initSerial();
 
 	/* Initialize EEPROM */
 	initEEPROM();
@@ -65,23 +65,22 @@ void setup() {
 	/* Initialize Real Time Clock */
 	initRTC();
 	
-	/* To set the date & time of DS3231 module */
+	/* Uncoment this if your DS3231 module has lost power or it's the first time you are 
+	 * uploading that code to your arduino. Sets the correct date and time to DS3231 module.	 
+	 */
 	//adjustRTC();
 	
 	/* Initialize some time related variables to allow checkSchedule() function to run properly */
 	initCheckSchedule();
+	
+	/* Initialize the variables of checkButtons to allow sensors ISR treatment */
+	initCheckButtons();
+	
+	initCheckCommand();
+	initCheckNextAction();
 
 	/* Initialize wireless module */
 	
-	
-	
-	/* Debug code */
-	/*#ifdef DEBUG
-		Serial.print(F("buttonPin0 (IN->OUT): "));
-		Serial.print(digitalRead(BUTTON_PIN_0));
-		Serial.print(F(" buttonPin1 (OUT->IN): "));
-		Serial.println(digitalRead(BUTTON_PIN_1));
-	#endif*/
 
 }
 
@@ -98,7 +97,7 @@ void loop() {
 	checkSchedule();
 	
 	/* Checks if sensors have detected some movement */
-	checkButtonsISR();
+	checkButtons();
   
 }
 

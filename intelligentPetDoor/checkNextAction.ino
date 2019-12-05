@@ -40,28 +40,35 @@
 
 /*----------TYPEDEFS------------------------------------------------------------*/
 
+/* Data type to store a next action command */
 typedef struct nextAction {
-	int npetsIn = -1;
-	int npetsOut = -1;
-	int movement = -1; // 0 = open, 1 = in, 2 = out, 3 = close
+	
+	/* 0 = open
+	 * 1 = in
+	 * 2 = out
+	 * 3 = close 
+	 */
+	int movement;
+	
+	int npetsIn;
+	int npetsOut;
+	
 } nextAction;
 
 /*----------VARIABLES-----------------------------------------------------------*/
 
-/*extern unsigned long doorEventEnd;
-extern nextAction action;
-extern int npetsIn;
-extern int npetsOut;*/
-
 /* Stores the next action if any */
 nextAction action;
 
+/* Externally declared variables used on this file */
+extern unsigned long doorEventEnd;
+extern int npetsIn;
+extern int npetsOut;
+
 /*----------FUNCTIONS-----------------------------------------------------------*/
 
-void clearNextAction(){
-	action.npetsIn = -1;
-	action.npetsOut = -1;
-	action.movement = -1;
+void initCheckNextAction(){
+	clearNextAction();
 }
 
 /* Checks if there are next action issued */
@@ -109,6 +116,11 @@ void checkNextAction(){
 		//command done so clear it
 		clearNextAction();
 	}
+}
+
+/* Resets next action variable to default value */
+void clearNextAction(){
+	action.movement = -1;
 }
 
 /*----------INTERRUPTS----------------------------------------------------------*/

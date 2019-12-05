@@ -45,16 +45,32 @@
 /*----------VARIABLES-----------------------------------------------------------*/
 
 /* Flags that allow checkButtonISR know if some sensor has detected movement */
-extern volatile char inOutFlag;
-extern volatile char outInFlag;
+volatile char inOutFlag;
+volatile char outInFlag;
 
 /*----------FUNCTIONS-----------------------------------------------------------*/
 
 void initISR(){
 	
+	/* Set up initial value of ISR flags */
+	inOutFlag=0;
+	outInFlag=0;
+	
 	/* Attach given interrupts to given PCB pins */
 	attachInterrupt(digitalPinToInterrupt(BUTTON_PIN_0), buttonInOutISR, FALLING);
 	attachInterrupt(digitalPinToInterrupt(BUTTON_PIN_1), buttonOutInISR, FALLING);
+	
+	/* Debug code */
+	#ifdef DEBUG
+		Serial.print(F("Sensor IN->OUT value (Arduino pin #"));
+		Serial.print(BUTTON_PIN_0,DEC);
+		Serial.print(F("): "));
+		Serial.println(digitalRead(BUTTON_PIN_0));
+		Serial.print(F("Sensor OUT->IN value (Arduino pin #"));
+		Serial.print(BUTTON_PIN_1,DEC);
+		Serial.print(F("): "));
+		Serial.println(digitalRead(BUTTON_PIN_1));
+	#endif
 	
 }
 
