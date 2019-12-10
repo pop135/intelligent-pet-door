@@ -57,6 +57,9 @@ unsigned long buttonISRTime;
 unsigned long doorEventStart;
 unsigned long doorEventEnd;
 
+/* Door event type */
+int doorEventType;
+
 /* To step over diferent stages of a door event */
 char debounceFlag;
 
@@ -87,6 +90,9 @@ void initCheckButtons(){
 	/* All pets inside at the begining */
 	npetsIn = npets;
 	npetsOut = 0;
+	
+	/* Door event type init */
+	doorEventType = 0;
 	
 	/* Debug code */
 	#ifdef DEBUG
@@ -134,6 +140,9 @@ void checkButtons(){
 			
 			/* Set the door event end time */
 			doorEventEnd = millis();
+			
+			tellUsers(doorEventType);
+			doorEventType = 0;
 			
 			/* Debug code */
 			#ifdef DEBUG
@@ -247,6 +256,7 @@ void inOutDoorEvent(){
 	if(npetsIn > 0) {
 		npetsOut++;
 		npetsIn--;
+		doorEventType = 1;
 	
 		/* Debug code */
 		#ifdef DEBUG
@@ -256,6 +266,9 @@ void inOutDoorEvent(){
 			Serial.print(npetsOut);
 			Serial.println(F("."));
 		#endif
+		
+		
+		
 	}
 	
 	else{
@@ -274,6 +287,7 @@ void outInDoorEvent(){
 	if(npetsOut > 0) {
 		npetsOut--;
 		npetsIn++;
+		doorEventType = 2;
 		
 		/* Debug code */
 		#ifdef DEBUG
@@ -283,6 +297,7 @@ void outInDoorEvent(){
 			Serial.print(npetsOut);
 			Serial.println(F("."));
 		#endif
+		
 	}
 	
 	else{
@@ -295,7 +310,27 @@ void outInDoorEvent(){
 	
 }
 
+void tellUsers(int e){
+	if(e==1){
+		
+		/* Debug code */
+		#ifdef DEBUG
+			Serial.println(F("Someone has gone outside."));
+		#endif
+		
+		sendMessageToAllUsers("Someone has gone outside 😸");
+	}
+	else if(e == 2){
+		
+		/* Debug code */
+		#ifdef DEBUG
+			Serial.println(F("Someone has gone inside."));
+		#endif
+		
+		sendMessageToAllUsers("Someone has returned home");// 😻");
+	}
+	
+}
+
 /*----------INTERRUPTS----------------------------------------------------------*/
-
-
 

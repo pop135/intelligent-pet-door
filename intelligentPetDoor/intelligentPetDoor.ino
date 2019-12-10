@@ -41,9 +41,11 @@
 
 /*----------TYPEDEFS------------------------------------------------------------*/
 
+
+
 /*----------VARIABLES-----------------------------------------------------------*/
 
-int npets = 1; //hardcoded!!!
+int npets = 2; //hardcoded!!!
 
 /*----------FUNCTIONS-----------------------------------------------------------*/
 
@@ -60,7 +62,7 @@ void setup() {
 	initISR();
 
 	/* Initialize EEPROM */
-	initEEPROM();
+	//initEEPROM();
 
 	/* Initialize Real Time Clock */
 	initRTC();
@@ -70,14 +72,17 @@ void setup() {
 	 */
 	//adjustRTC();
 	
-	/* Initialize some time related variables to allow checkSchedule() function to run properly */
-	initCheckSchedule();
+	/* Initialize some variables to allow schedule related functions to run properly */
+	initSchedule();
 	
 	/* Initialize the variables of checkButtons to allow sensors ISR treatment */
 	initCheckButtons();
 	
 	initCheckCommand();
+	
 	initCheckNextAction();
+	
+	initUsers();
 
 	/* Initialize wireless module */
 	
@@ -86,6 +91,8 @@ void setup() {
 
 /* Common loop function in all arduino projects. Main program goes here and iterates forever. Super-loop. */
 void loop() {
+	
+	checkSerial();
 	
 	/* Checks if user has issued a command */
 	checkCommand();

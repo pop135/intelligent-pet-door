@@ -33,7 +33,7 @@
  */
 
 /*----------INCLUDES-------------------------------------------------------------*/
-
+#include <SoftwareSerial.h>
 /*----------DEFINES--------------------------------------------------------------*/
 
 /*----------TYPEDEFS------------------------------------------------------------*/
@@ -76,6 +76,10 @@ int scheduledCommandSearch(commandIssued c);
 /* Variable to store the command it is filled by serialEvent interrupt */
 commandIssued command;
 
+extern SoftwareSerial ESP8266Serial;
+extern simpleTBMessage msg;
+extern int nschedule;
+
 /*----------FUNCTIONS-----------------------------------------------------------*/
 
 void initCheckCommand(){
@@ -111,6 +115,7 @@ void now(){
 		#endif
 		
 		open();
+		sendMessage(msg.id,F("Door opened! Purrfect!"));
 		
 	}
 	
@@ -123,6 +128,7 @@ void now(){
 		#endif
 		
 		in();
+		sendMessage(msg.id,F("They can just go inside now!"));
 		
 	}
 	
@@ -135,6 +141,7 @@ void now(){
 		#endif
 
 		out();
+		sendMessage(msg.id,F("They can just go outside now!"));
 		
 	}
 	/* Close action */
@@ -146,8 +153,10 @@ void now(){
 		#endif
 		
 		close();
+		sendMessage(msg.id,F("Door closed!"));
 		
 	}
+	
 }
 	
 /* To deal with program command */
@@ -200,6 +209,8 @@ void program(){
 			
 			/* Increment the number of scheduled commands */
 			nschedule++;
+			
+			sendMessage(msg.id,F("Scheduled command saved!"));
 		}
 		
 		else{
@@ -208,6 +219,8 @@ void program(){
 			#ifdef DEBUG
 				Serial.println(F("You already have a scheduled command at that time. Delete it before."));
 			#endif
+			
+			sendMessage(msg.id,F("Time slot already full!"));
 		}
 		
 	}
@@ -236,6 +249,8 @@ void program(){
 			
 			/* Decrement the number of scheduled commands */
 			nschedule--;
+			
+			sendMessage(msg.id,F("Scheduled command deleted!"));
 		}
 		else{
 			
@@ -243,6 +258,8 @@ void program(){
 			#ifdef DEBUG
 				Serial.println(F("Schedule to delete not found. Use \"/program show\" to see stored commands."));
 			#endif
+			
+			sendMessage(msg.id,F("That time slot is already empty."));
 		}
 	}
 
@@ -251,7 +268,7 @@ void program(){
 		
 		/* Debug code */
 		#ifdef DEBUG 
-			Serial.println(F("You entered: /program show"));
+			Serial.println(F("You entered: /prog show"));
 		#endif
 		
 		/* If we got something to show */
@@ -286,6 +303,39 @@ void program(){
 					}
 				}
 			#endif
+			
+			String aux;
+			char h[5];
+			
+			for(int i=2;i<(MAX_SCHEDULE*2);i=i+2){
+					schedule1 = EEPROM.read(i);
+					if((schedule1&0x3F) != 0x3F){
+						schedule2 = EEPROM.read(i+1);
+						day = schedule2&0x07;
+						hour = schedule2>>3;
+						minute = schedule1&0x3F;
+						movement = schedule1>>6;
+						if(day == 1) aux = F("Monday at ");
+						else if(day == 2) aux = F("Tuesday at ");
+						else if(day == 3) aux = F("Wednesday at ");
+						else if(day == 4) aux = F("Thursday at ");
+						else if(day == 5) aux = F("Friday at ");
+						else if(day == 6) aux = F("Saturday at ");
+						else if(day == 7) aux = F("Sunday at ");
+						
+						sprintf(h,"%d:%d",hour,minute);
+						
+						aux.concat(h);
+						
+						if(movement == 0){aux.concat(F(" -> open"));}
+						else if(movement == 1){aux.concat(F(" -> in"));}
+						else if(movement == 2){aux.concat(F(" -> out"));}
+						else if(movement == 3){aux.concat(F(" -> close"));}
+						Serial.println(aux);
+						sendMessage(msg.id,aux);
+					}
+				}
+			
 		}
 		else{
 			
@@ -293,6 +343,8 @@ void program(){
 			#ifdef DEBUG 
 				Serial.println(F("No scheduled commands."));
 			#endif
+			
+			sendMessage(msg.id,F("No commands scheduled atm."));
 		}
 	}
 	
@@ -314,12 +366,16 @@ void program(){
 					if(nschedule==0) break;
 				}
 			}
+			
+			sendMessage(msg.id,F("All scheduled commands deleted!🙀"));
 		}
 		else{
 			/* Debug code */
 			#ifdef DEBUG 
 				Serial.println(F("No scheduled commands."));
 			#endif
+			
+			sendMessage(msg.id,F("No commands scheduled atm."));
 		}
 	}
 }
@@ -336,19 +392,24 @@ void where(){
 	
 		/* Debug code */
 		#ifdef DEBUG 
-			Serial.println("All of your pets are inside.");
+			Serial.println(F("All of your pets are inside."));
 		#endif
+		
+		sendMessage(msg.id,F("We are all inside home.😻"));
 		
 	}
 	else if (npetsOut == npets) {
 		
 		/* Debug code */
 		#ifdef DEBUG 
-			Serial.println("All of your pets are outside.");
+			Serial.println(F("All of your pets are outside"));
 		#endif
 		
+		sendMessage(msg.id,F("We are all outside!😼"));
 	}
 	else{
+		
+		char h[60];
 		
 		/* Debug code */
 		#ifdef DEBUG 
@@ -362,6 +423,9 @@ void where(){
 			if(npetsOut!=1) {Serial.print("s");}
 			Serial.println(" outside.");
 		#endif
+		
+		sprintf(h,"%d of us are at home and %d are roaming outside",npetsIn,npetsOut);
+		sendMessage(msg.id,(String)h);
 		
 	}
 

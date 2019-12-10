@@ -71,7 +71,7 @@ void initServo(){
 	/* Section to make sure that the servos are running and are oppened when the program starts */
 	/*Servo0.write(SERVO_CLOSE_180);
 	Servo1.write(SERVO_CLOSE_0);
-	Servo2.write(SERVO_CLOSE_180);
+	Servo2.write(SERVO_CLOSE_180);*/
 	
 	delay(2000);
 	
@@ -79,7 +79,11 @@ void initServo(){
 	Servo1.write(SERVO_OPEN);
 	Servo2.write(SERVO_OPEN);
 
-	delay(2000);*/
+	delay(2000);
+	
+	Servo0.detach();
+	Servo1.detach();
+	Servo2.detach();
 	
 	/* Initial servos state */
 	servoState0 = SERVO_OPEN;
@@ -91,66 +95,87 @@ void initServo(){
 void open(){
 	
 	if(servoState0 != SERVO_OPEN){
+		Servo0.attach(SERVO_PIN_0);
 		Servo0.write(SERVO_OPEN);
 		servoState0 = SERVO_OPEN;
 	}
 	
 	if(servoState1 != SERVO_OPEN){
+		Servo1.attach(SERVO_PIN_1);
 		Servo1.write(SERVO_OPEN);
 		servoState1 = SERVO_OPEN;
 	}
 	
 	if(servoState2 != SERVO_OPEN){
+		Servo2.attach(SERVO_PIN_2);
 		Servo2.write(SERVO_OPEN);
 		servoState2 = SERVO_OPEN;
 	}
 	
 	/* Wait servos movement */
 	delay(2000);
+	
+	if(Servo0.attached()) Servo0.detach();
+	if(Servo1.attached()) Servo1.detach();
+	if(Servo2.attached()) Servo2.detach();
 }
 
 /* Move the servos to let pets go in but not go out */
 void in(){
 	
 	if(servoState0 == SERVO_OPEN){
+		Servo0.attach(SERVO_PIN_0);
 		Servo0.write(SERVO_CLOSE_180);
 		servoState0 = SERVO_CLOSE_180;
 	}
 	
 	if(servoState1 != SERVO_OPEN){
+		Servo1.attach(SERVO_PIN_1);
 		Servo1.write(SERVO_OPEN);
 		servoState1 = SERVO_OPEN;
 	}
 	
 	if(servoState2 != SERVO_OPEN){
+		Servo2.attach(SERVO_PIN_2);
 		Servo2.write(SERVO_OPEN);
 		servoState2 = SERVO_OPEN;
 	}
 	
 	/* Wait servos movement */
 	delay(2000);
+	
+	if(Servo0.attached()) Servo0.detach();
+	if(Servo1.attached()) Servo1.detach();
+	if(Servo2.attached()) Servo2.detach();
 }
 
 /* Move the servos to let pets go out but not go in */
 void out(){
 	
 	if(servoState0 != SERVO_OPEN){
+		Servo0.attach(SERVO_PIN_0);
 		Servo0.write(SERVO_OPEN);
 		servoState0 = SERVO_OPEN;
 	}
 	
 	if(servoState1 == SERVO_OPEN){
+		Servo1.attach(SERVO_PIN_1);
 		Servo1.write(SERVO_CLOSE_0);
 		servoState1 = SERVO_CLOSE_0;
 	}
 	
 	if(servoState2 == SERVO_OPEN){
+		Servo2.attach(SERVO_PIN_2);
 		Servo2.write(SERVO_CLOSE_180);
 		servoState2 = SERVO_CLOSE_180;
 	}
 	
 	/* Wait servos movement */
 	delay(2000);
+	
+	if(Servo0.attached()) Servo0.detach();
+	if(Servo1.attached()) Servo1.detach();
+	if(Servo2.attached()) Servo2.detach();
 	
 }
 
@@ -158,22 +183,29 @@ void out(){
 void close(){
 	
 	if(servoState0 == SERVO_OPEN){
+		Servo0.attach(SERVO_PIN_0);
 		Servo0.write(SERVO_CLOSE_180);
 		servoState0 = SERVO_CLOSE_180;
 	}
 	
 	if(servoState1 == SERVO_OPEN){
+		Servo1.attach(SERVO_PIN_1);
 		Servo1.write(SERVO_CLOSE_0);
 		servoState1 = SERVO_CLOSE_0;
 	}
 	
 	if(servoState2 == SERVO_OPEN){
+		Servo2.attach(SERVO_PIN_2);
 		Servo2.write(SERVO_CLOSE_180);
 		servoState2 = SERVO_CLOSE_180;
 	}
 	
 	/* Wait servos movement */
 	delay(2000);
+	
+	if(Servo0.attached()) Servo0.detach();
+	if(Servo1.attached()) Servo1.detach();
+	if(Servo2.attached()) Servo2.detach();
 
 }
 

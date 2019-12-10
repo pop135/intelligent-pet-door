@@ -87,31 +87,49 @@ void checkNextAction(){
 		((millis() - doorEventEnd) > TIME_BETWEN_DE_AND_NA)){
 		
 		#ifdef DEBUG
-			Serial.print("CHECK NEXT ACTION doorEventEnd=");
+			Serial.print(F("CHECK NEXT ACTION doorEventEnd="));
 			Serial.print(doorEventEnd,DEC);
 		#endif
 		
-		Serial.print("Conditions met. Programmed action ");
+
 		if(action.movement == 0){
-			Serial.print(F("open"));
+			#ifdef DEBUG
+				Serial.print(F("Conditions met. Programmed action open done"));
+			#endif
+			
 			open();
+			sendMessageToAllUsers(F("/when Conditions met. Door opened!"));
+		
 		}
 		//in (servo0 = open and servo1 = close)
 		else if(action.movement == 1){
-			Serial.print(F("in"));
+			#ifdef DEBUG
+				Serial.print(F("Conditions met. Programmed action in done."));
+			#endif
+			
 			in();
+			sendMessageToAllUsers(F("/when Conditions met. Pets can just come in now!"));
+		
 		}
 		//out (servo0 = close and servo1 = open)
 		else if(action.movement == 2){
-			Serial.print(F("out"));
+			#ifdef DEBUG
+				Serial.print(F("Conditions met. Programmed action out done."));
+			#endif
+			
 			out();
+			sendMessageToAllUsers(F("/when Conditions met. Pets can just go out now!"));
 		}
 		//close (servo0 = close and servo 1 = close)
 		else if(action.movement == 3){
-			Serial.print(F("close"));
+			#ifdef DEBUG
+				Serial.print(F("Conditions met. Programmed action close done."));
+			#endif
+			
 			close();
+			sendMessageToAllUsers(F("/when Conditions met. Door closed!"));
 		}
-		Serial.println(" done.");
+
 		
 		//command done so clear it
 		clearNextAction();

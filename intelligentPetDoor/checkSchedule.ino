@@ -50,18 +50,29 @@ int minuteBefore;
 unsigned long startMillis;
 unsigned long currentMillis;
 
-/* Externally declared number of scheduled commands */
-extern int nschedule;
+/* Number of scheduled stored commands */
+int nschedule;
 
 /*----------FUNCTIONS-----------------------------------------------------------*/
 
-void initCheckSchedule(){
+void initSchedule(){
 	
 	/* Get the minute before now */
 	minuteBefore = (rtc.now()).minute()-1;
 	
 	/* Get the actual time */
 	startMillis=millis();
+	
+	/* Starts from zero scheduled stored commands */
+	nschedule=0;
+	
+	/* Read the EEPROM looking for previous scheduled stored commands */
+	for(int i=2;i<(MAX_SCHEDULE*2);i=i+2){
+		if((EEPROM.read(i)&0x3F) != 0x3F){
+			nschedule++;
+		}
+	}
+	
 }
 
 /* checks the scheduled commands every minute. If somthing was scheduled do it. */
