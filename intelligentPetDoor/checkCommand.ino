@@ -33,59 +33,71 @@
  */
 
 /*----------INCLUDES-------------------------------------------------------------*/
-#include <SoftwareSerial.h>
+
 /*----------DEFINES--------------------------------------------------------------*/
 
 /*----------TYPEDEFS------------------------------------------------------------*/
 
-/* Data type to store a command. */
-typedef struct commandIssued {
+// /* Data type to store a command. */
+// typedef struct commandIssued {
 	
-	/* 0 = /now
-	 * 1 = /program
-	 * 2 = /where
-	 */
-	int commandName;
+	// /* 0 = /now
+	 // * 1 = /program
+	 // * 2 = /where
+	 // */
+	// int commandName;
 	
-	int day;
-	int hour;
-	int minute;
+	// int day;
+	// int hour;
+	// int minute;
 	
-	/* 0 = open
-	 * 1 = in
-	 * 2 = out
-	 * 3 = close 
-	 */
-	int movement; 
+	// /* 0 = open
+	 // * 1 = in
+	 // * 2 = out
+	 // * 3 = close 
+	 // */
+	// int movement; 
 	
-	/* 0 = schedule command
- 	 * 1 = delete scheduled command
- 	 * 2 = show scheduled commands
-	 * 3 = delete all scheduled commands 
-	 */
-	int modifierFlag;
+	// /* 0 = schedule command
+ 	 // * 1 = delete scheduled command
+ 	 // * 2 = show scheduled commands
+	 // * 3 = delete all scheduled commands 
+	 // */
+	// int modifierFlag;
 	
-} commandIssued; 
+// } commandIssued; 
 
 /*----------PROTOTIPES----------------------------------------------------------*/
 
 int scheduledCommandSearch(commandIssued c);
+void swapCommands(commandIssued *commandA, commandIssued *commandB);
 
 /*----------VARIABLES-----------------------------------------------------------*/
 
 /* Variable to store the command it is filled by serialEvent interrupt */
 commandIssued command;
 
+/* Extern variables used here */
 extern SoftwareSerial ESP8266Serial;
 extern simpleTBMessage msg;
 extern int nschedule;
 
+extern void open();
+extern void in();
+extern void out();
+extern void close();
+uint8_t readEEPROM(int p);
+void writeEEPROM(int p, uint8_t d);
+extern void sendMessage(uint32_t id, String text);
+
 /*----------FUNCTIONS-----------------------------------------------------------*/
 
+/* Init function */
 void initCheckCommand(){
 	clearCommand();
 }
 
+/* Checks for a user issued command */
 void checkCommand(){
 	
 	/* Depends on the command issued calls proper function */
@@ -114,7 +126,10 @@ void now(){
 			Serial.println(F("open"));
 		#endif
 		
+		/* Actually do the action */
 		open();
+		
+		/* Inform the user */
 		sendMessage(msg.id,F("Door opened! Purrfect!"));
 		
 	}
@@ -127,7 +142,10 @@ void now(){
 			Serial.println(F("in"));
 		#endif
 		
+		/* Actually do the action */
 		in();
+		
+		/* Inform the user */
 		sendMessage(msg.id,F("They can just go inside now!"));
 		
 	}
@@ -139,8 +157,11 @@ void now(){
 		#ifdef DEBUG
 			Serial.println(F("out"));
 		#endif
-
+		
+		/* Actually do the action */
 		out();
+		
+		/* Inform the user */
 		sendMessage(msg.id,F("They can just go outside now!"));
 		
 	}
@@ -152,7 +173,10 @@ void now(){
 			Serial.println(F("close"));
 		#endif
 		
+		/* Actually do the action */
 		close();
+		
+		/* Inform the user */
 		sendMessage(msg.id,F("Door closed!"));
 		
 	}
@@ -176,9 +200,10 @@ void program(){
 		
 		/* Debug code */
 		#ifdef DEBUG
-			Serial.print(F("You entered: /program "));
+			Serial.print(F("You entered: /prog "));
 			Serial.print(command.day);
 			Serial.print(F(" "));
+			if(command.hour<10) Serial.print(F("0"));
 			Serial.print(command.hour);
 			Serial.print(F(":"));
 			if(command.minute<10) Serial.print(F("0"));
@@ -196,13 +221,13 @@ void program(){
 		if(found == -1){
 			
 			/* Search for an empty EEPROM space and store the command there */
-			for(int i=2;i<MAX_SCHEDULE*2;i=i+2){
-				schedule1 = EEPROM.read(i);
+			for(int i=SCHEDULE_POS;i<MAX_SCHEDULE*SCHEDULE_SIZE;i=i+SCHEDULE_SIZE){
+				schedule1 = readEEPROM(i);
 				if((schedule1&0x3F)==0x3F){
 					schedule1=command.movement<<6;
-					EEPROM.write(i,(schedule1|command.minute));
+					writeEEPROM(i,(schedule1|command.minute));
 					schedule2=command.hour<<3;
-					EEPROM.write(i+1,(schedule2|command.day));
+					writeEEPROM(i+1,(schedule2|command.day));
 					break;
 				}
 			}
@@ -210,7 +235,19 @@ void program(){
 			/* Increment the number of scheduled commands */
 			nschedule++;
 			
+			/* Inform the user */
 			sendMessage(msg.id,F("Scheduled command saved!"));
+		}
+		else if(found == -2) {
+			
+			/* Debug code */
+			#ifdef DEBUG
+				Serial.println(F("Max schedules per day reached."));
+			#endif
+			
+			/* Inform the user */
+			sendMessage(msg.id,F("Max schedules per day reached. "));
+			
 		}
 		
 		else{
@@ -220,6 +257,7 @@ void program(){
 				Serial.println(F("You already have a scheduled command at that time. Delete it before."));
 			#endif
 			
+			/* Inform the user */
 			sendMessage(msg.id,F("Time slot already full!"));
 		}
 		
@@ -230,7 +268,7 @@ void program(){
 		
 		/* Debug code */
 		#ifdef DEBUG
-			Serial.print(F("You entered: /program del "));
+			Serial.print(F("You entered: /prog del "));
 			Serial.print(command.day);
 			Serial.print(F(" "));
 			Serial.print(command.hour);
@@ -242,14 +280,15 @@ void program(){
 		found = scheduledCommandSearch(command);
 		
 		/* If command found */
-		if(found != -1){
+		if((found != -1)){
 			
 			/* Delete it */
-			EEPROM.write(found,0x3F);
+			writeEEPROM(found,0x3F);
 			
 			/* Decrement the number of scheduled commands */
 			nschedule--;
 			
+			/* Inform the user */
 			sendMessage(msg.id,F("Scheduled command deleted!"));
 		}
 		else{
@@ -259,7 +298,8 @@ void program(){
 				Serial.println(F("Schedule to delete not found. Use \"/program show\" to see stored commands."));
 			#endif
 			
-			sendMessage(msg.id,F("That time slot is already empty."));
+			/* Inform the user */
+			sendMessage(msg.id,F("Nothing saved in that time slot"));
 		}
 	}
 
@@ -273,6 +313,123 @@ void program(){
 		
 		/* If we got something to show */
 		if(nschedule >0){
+				
+			#ifdef DEBUG 
+				Serial.print(F("Comands saved: "));
+				Serial.println(nschedule);
+			#endif
+			
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			//Buscar alguna manera de reduir el tamany d'aquesta taula
+			/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			
+			/* List to store scheduled commands */
+			struct EEPROMStoredCommand sortedScheduledCommands[MAX_SCHEDULE];
+			int nReadCommands=0;
+			
+			/* Read EEPROM and store scheduled commands in a list */
+			for(int i=SCHEDULE_POS;i<(MAX_SCHEDULE*SCHEDULE_SIZE);i=i+SCHEDULE_SIZE){
+				schedule1 = readEEPROM(i);
+				if((schedule1&0x3F) != 0x3F){
+					schedule2 = readEEPROM(i+1);
+					sortedScheduledCommands[nReadCommands].day = schedule2&0x07;
+					sortedScheduledCommands[nReadCommands].hour = schedule2>>3;
+					sortedScheduledCommands[nReadCommands].minute = schedule1&0x3F;
+					sortedScheduledCommands[nReadCommands].movement = schedule1>>6;
+					
+					#ifdef DEBUG
+						Serial.print(F("# read commands:"));
+						Serial.print(nReadCommands);
+						Serial.print(F(" Day: "));
+						Serial.print(sortedScheduledCommands[nReadCommands].day);
+						Serial.print(F(" Hour: "));
+						Serial.print(sortedScheduledCommands[nReadCommands].hour);
+						Serial.print(F(" Minute: "));
+						Serial.print(sortedScheduledCommands[nReadCommands].minute);
+						Serial.print(F(" action: "));
+						Serial.println(sortedScheduledCommands[nReadCommands].movement);
+					#endif
+					
+					nReadCommands++;
+					
+					if(nschedule == nReadCommands) break;
+					
+				}
+			}
+			
+			/* Sort the array first by day, second by hour and finally by minute */
+			bool swapped; 
+			EEPROMStoredCommand auxCommand;
+			for (int i = 0; i < nReadCommands-1; i++){
+				swapped = false; 
+				for (int j = 0; j < nReadCommands-i-1; j++) {
+					/* If day pos j greater than day pos j+1 swap */
+					if (sortedScheduledCommands[j].day > sortedScheduledCommands[j+1].day) {
+						// auxCommand.day = sortedScheduledCommands[j].day;
+						// auxCommand.hour = sortedScheduledCommands[j].hour;
+						// auxCommand.minute = sortedScheduledCommands[j].minute;
+						// auxCommand.movement = sortedScheduledCommands[j].movement;
+						// sortedScheduledCommands[j].day = sortedScheduledCommands[j+1].day;
+						// sortedScheduledCommands[j].hour = sortedScheduledCommands[j+1].hour;
+						// sortedScheduledCommands[j].minute = sortedScheduledCommands[j+1].minute;
+						// sortedScheduledCommands[j].movement = sortedScheduledCommands[j+1].movement;
+						// sortedScheduledCommands[j+1].day = auxCommand.day;
+						// sortedScheduledCommands[j+1].hour = auxCommand.hour;
+						// sortedScheduledCommands[j+1].minute = auxCommand.minute;
+						// sortedScheduledCommands[j+1].movement = auxCommand.movement;
+						
+						swapCommands(&sortedScheduledCommands[j], &sortedScheduledCommands[j+1]); 
+						swapped = true; 
+					} 
+					else if (sortedScheduledCommands[j].day == sortedScheduledCommands[j+1].day){
+						/* In case of equal days check hour */
+						if (sortedScheduledCommands[j].hour > sortedScheduledCommands[j+1].hour) {
+							// auxCommand.day = sortedScheduledCommands[j].day;
+							// auxCommand.hour = sortedScheduledCommands[j].hour;
+							// auxCommand.minute = sortedScheduledCommands[j].minute;
+							// auxCommand.movement = sortedScheduledCommands[j].movement;
+							// sortedScheduledCommands[j].day = sortedScheduledCommands[j+1].day;
+							// sortedScheduledCommands[j].hour = sortedScheduledCommands[j+1].hour;
+							// sortedScheduledCommands[j].minute = sortedScheduledCommands[j+1].minute;
+							// sortedScheduledCommands[j].movement = sortedScheduledCommands[j+1].movement;
+							// sortedScheduledCommands[j+1].day = auxCommand.day;
+							// sortedScheduledCommands[j+1].hour = auxCommand.hour;
+							// sortedScheduledCommands[j+1].minute = auxCommand.minute;
+							// sortedScheduledCommands[j+1].movement = auxCommand.movement;
+							
+							swapCommands(&sortedScheduledCommands[j], &sortedScheduledCommands[j+1]); 
+							swapped = true; 
+						} 
+						else if (sortedScheduledCommands[j].hour == sortedScheduledCommands[j+1].hour) {
+							/* In case of equal days and hours check minute */
+							if (sortedScheduledCommands[j].minute > sortedScheduledCommands[j+1].minute) {
+								
+								// auxCommand.day = sortedScheduledCommands[j].day;
+								// auxCommand.hour = sortedScheduledCommands[j].hour;
+								// auxCommand.minute = sortedScheduledCommands[j].minute;
+								// auxCommand.movement = sortedScheduledCommands[j].movement;
+								// sortedScheduledCommands[j].day = sortedScheduledCommands[j+1].day;
+								// sortedScheduledCommands[j].hour = sortedScheduledCommands[j+1].hour;
+								// sortedScheduledCommands[j].minute = sortedScheduledCommands[j+1].minute;
+								// sortedScheduledCommands[j].movement = sortedScheduledCommands[j+1].movement;
+								// sortedScheduledCommands[j+1].day = auxCommand.day;
+								// sortedScheduledCommands[j+1].hour = auxCommand.hour;
+								// sortedScheduledCommands[j+1].minute = auxCommand.minute;
+								// sortedScheduledCommands[j+1].movement = auxCommand.movement;
+								
+								swapCommands(&sortedScheduledCommands[j], &sortedScheduledCommands[j+1]); 
+								swapped = true; 
+									
+							}
+						}
+					}
+					
+				} 
+
+				/* If no elements were swaped break */ 
+				if (swapped == false) break; 
+				
+			} 
 			
 			/* Debug code */
 			#ifdef DEBUG 
@@ -280,61 +437,62 @@ void program(){
 				Serial.println(F(" Day   Hour   Command"));
 				Serial.println(F("---------------------"));
 				
-				for(int i=2;i<(MAX_SCHEDULE*2);i=i+2){
-					schedule1 = EEPROM.read(i);
-					if((schedule1&0x3F) != 0x3F){
-						schedule2 = EEPROM.read(i+1);
-						day = schedule2&0x07;
-						hour = schedule2>>3;
-						minute = schedule1&0x3F;
-						movement = schedule1>>6;
-						Serial.print(F("   "));
-						Serial.print(day);
-						Serial.print(F("  "));
-						Serial.print(hour);
-						Serial.print(F(":"));
-						if(minute<10) Serial.print(F("0"));
-						Serial.print(minute);
-						Serial.print(F("   "));
-						if(movement == 0){Serial.println(F("open"));}
-						else if(movement == 1){Serial.println(F("in"));}
-						else if(movement == 2){Serial.println(F("out"));}
-						else if(movement == 3){Serial.println(F("close"));}
-					}
+				for(int i=0;i<nReadCommands;i++){
+					Serial.print(F("   "));
+					Serial.print(sortedScheduledCommands[i].day);
+					Serial.print(F("  "));
+					Serial.print(sortedScheduledCommands[i].hour);
+					Serial.print(F(":"));
+					if(sortedScheduledCommands[i].minute<10) Serial.print(F("0"));
+					Serial.print(sortedScheduledCommands[i].minute);
+					Serial.print(F("   "));
+					if(sortedScheduledCommands[i].movement == 0){Serial.println(F("open"));}
+					else if(sortedScheduledCommands[i].movement == 1){Serial.println(F("in"));}
+					else if(sortedScheduledCommands[i].movement == 2){Serial.println(F("out"));}
+					else if(sortedScheduledCommands[i].movement == 3){Serial.println(F("close"));}
+					
 				}
 			#endif
 			
+			/* Once sorted send it to the user */
 			String aux;
-			char h[5];
+			int scheduledCommandsFound;
 			
-			for(int i=2;i<(MAX_SCHEDULE*2);i=i+2){
-					schedule1 = EEPROM.read(i);
-					if((schedule1&0x3F) != 0x3F){
-						schedule2 = EEPROM.read(i+1);
-						day = schedule2&0x07;
-						hour = schedule2>>3;
-						minute = schedule1&0x3F;
-						movement = schedule1>>6;
-						if(day == 1) aux = F("Monday at ");
-						else if(day == 2) aux = F("Tuesday at ");
-						else if(day == 3) aux = F("Wednesday at ");
-						else if(day == 4) aux = F("Thursday at ");
-						else if(day == 5) aux = F("Friday at ");
-						else if(day == 6) aux = F("Saturday at ");
-						else if(day == 7) aux = F("Sunday at ");
-						
-						sprintf(h,"%d:%d",hour,minute);
-						
-						aux.concat(h);
-						
-						if(movement == 0){aux.concat(F(" -> open"));}
-						else if(movement == 1){aux.concat(F(" -> in"));}
-						else if(movement == 2){aux.concat(F(" -> out"));}
-						else if(movement == 3){aux.concat(F(" -> close"));}
-						Serial.println(aux);
-						sendMessage(msg.id,aux);
+			for(int i=1;i<8;i++){
+				scheduledCommandsFound = 0;
+				if(i==1) aux = F("Monday\n");
+				else if (i == 2) aux = F("Tuesday\n");
+				else if (i == 3) aux = F("Wednesday\n");
+				else if (i == 4) aux = F("Thursday\n");
+				else if (i == 5) aux = F("Friday\n");
+				else if (i == 6) aux = F("Saturday\n");
+				else if (i == 7) aux = F("Sunday\n");
+				
+				for (int j = 0; j<nReadCommands;j++){
+					if(sortedScheduledCommands[j].day == i){
+						scheduledCommandsFound = 1;
+						aux = aux + F(" - ");
+						if(sortedScheduledCommands[j].hour<10) aux = aux + F("0");
+						aux = aux + sortedScheduledCommands[j].hour + ":";
+						if(sortedScheduledCommands[j].minute<10) aux = aux+ F("0");
+						aux = aux + sortedScheduledCommands[j].minute;
+						if(sortedScheduledCommands[j].movement == 0) aux = aux + F(" open\n");
+						else if(sortedScheduledCommands[j].movement == 1) aux = aux + F(" in\n");
+						else if(sortedScheduledCommands[j].movement == 2) aux = aux + F(" out\n");
+						else if(sortedScheduledCommands[j].movement == 3) aux = aux + F(" close\n");
 					}
 				}
+				if(scheduledCommandsFound) {
+					
+					#ifdef DEBUG
+						Serial.println(aux);
+						
+					#endif	
+					
+					sendMessage(msg.id,aux);
+					
+				}
+			}	
 			
 		}
 		else{
@@ -344,29 +502,31 @@ void program(){
 				Serial.println(F("No scheduled commands."));
 			#endif
 			
+			/* Inform the user */
 			sendMessage(msg.id,F("No commands scheduled atm."));
 		}
 	}
 	
-	/* To deal with deleta all scheduled commands */
+	/* To deal with delete all scheduled commands */
 	else if(command.modifierFlag == 3){
 		
 		/* Debug code */
 		#ifdef DEBUG 
-			Serial.println(F("You entered: /program del all"));
+			Serial.println(F("You entered: /prog del all"));
 		#endif
 		
 		/* If something has to be deleted */
 		if(nschedule > 0){
-			for(int i=2;i<(MAX_SCHEDULE*2);i=i+2){
-				schedule1 = EEPROM.read(i);
+			for(int i=SCHEDULE_POS;i<(MAX_SCHEDULE*SCHEDULE_SIZE);i=i+SCHEDULE_SIZE){
+				schedule1 = readEEPROM(i);
 				if((schedule1&0x3F) != 0x3F){
-					EEPROM.write(i,0x3F);
+					writeEEPROM(i,0x3F);
 					nschedule--;
 					if(nschedule==0) break;
 				}
 			}
 			
+			/* Inform the user */
 			sendMessage(msg.id,F("All scheduled commands deleted!🙀"));
 		}
 		else{
@@ -375,7 +535,8 @@ void program(){
 				Serial.println(F("No scheduled commands."));
 			#endif
 			
-			sendMessage(msg.id,F("No commands scheduled atm."));
+			/* Inform the user */
+			 sendMessage(msg.id,F("No commands scheduled atm."));
 		}
 	}
 }
@@ -395,6 +556,7 @@ void where(){
 			Serial.println(F("All of your pets are inside."));
 		#endif
 		
+		/* Inform the user */
 		sendMessage(msg.id,F("We are all inside home.😻"));
 		
 	}
@@ -405,27 +567,26 @@ void where(){
 			Serial.println(F("All of your pets are outside"));
 		#endif
 		
+		/* Inform the user */
 		sendMessage(msg.id,F("We are all outside!😼"));
 	}
 	else{
 		
-		char h[60];
-		
 		/* Debug code */
 		#ifdef DEBUG 
-			Serial.print("There are ");
+			Serial.print(F("There are "));
 			Serial.print(npetsIn);
-			Serial.print(" pet");
-			if(npetsIn!=1) {Serial.print("s");}
-			Serial.print(" inside and ");
+			Serial.print(F(" pet"));
+			if(npetsIn!=1) {Serial.print(F("s"));}
+			Serial.print(F(" inside and "));
 			Serial.print(npetsOut);
-			Serial.print(" pet");
-			if(npetsOut!=1) {Serial.print("s");}
-			Serial.println(" outside.");
+			Serial.print(F(" pet"));
+			if(npetsOut!=1) {Serial.print(F("s"));}
+			Serial.println(F(" outside."));
 		#endif
 		
-		sprintf(h,"%d of us are at home and %d are roaming outside",npetsIn,npetsOut);
-		sendMessage(msg.id,(String)h);
+		/* Inform the user */
+		sendMessage(msg.id,(String)npetsIn + F(" of us are at home and ") + npetsOut + F(" are roaming outside"));
 		
 	}
 
@@ -440,14 +601,16 @@ int scheduledCommandSearch(commandIssued c){
 	/* To store the EEPROM readed info */
 	int day, hour, minute;
 	
-	/* To count the number of schedules found */
+	/* To count the total number of schedules found */
 	char schedulesFound=0;
 	
+	char schedulesFoundSameDay = 0;
+	
 	/* Search in the EEPROM */
-	for(int i=2;i<(MAX_SCHEDULE*2);i=i+2){
-		schedule1 = EEPROM.read(i);
+	for(int i=SCHEDULE_POS;i<(MAX_SCHEDULE*SCHEDULE_SIZE);i=i+SCHEDULE_SIZE){
+		schedule1 = readEEPROM(i);
 		if((schedule1&0x3F) != 0x3F){
-			schedule2 = EEPROM.read(i+1);
+			schedule2 = readEEPROM(i+1);
 			day = schedule2&0x07;
 			hour = schedule2>>3;
 			minute = schedule1&0x3F;
@@ -457,11 +620,21 @@ int scheduledCommandSearch(commandIssued c){
 				return i;
 			}
 			else{
+
+				/* One more schedule found for that day */
+				if(day == c.day) schedulesFoundSameDay++;
+				
+				/* If max schedules for day was reached return */
+				if (schedulesFoundSameDay == MAX_SCHEDULE_A_DAY) return -2;
+				
 				/* One schedule found and it's not the one we are looking for. Increment the counter */
 				schedulesFound++;
 				
 				/* If there are no more schedules stored that can be found return */
 				if(schedulesFound == nschedule) return -1;
+				
+
+
 			}
 		}
 	}
@@ -474,5 +647,35 @@ int scheduledCommandSearch(commandIssued c){
 void clearCommand(){
 	command.commandName = -1;
 }
+
+/* Implement swap function for bubble sort the list */
+void swapCommands(EEPROMStoredCommand *commandA, EEPROMStoredCommand *commandB) { 
+	// EEPROMStoredCommand temp;
+	// temp.day = commandA->day;
+	// temp.hour = commandA->hour;
+	// temp.minute = commandA->minute;
+	// temp.movement = commandA->movement;
+	
+	// commandA->day = commandB->day;
+	// commandA->hour = commandB->hour;
+	// commandA->minute = commandB->minute;
+	// commandA->movement = commandB->movement;
+	
+	// commandB->day = commandA->day;
+	// commandB->hour = commandA->hour;
+	// commandB->minute = commandA->minute;
+	// commandB->movement = commandA->movement;
+	EEPROMStoredCommand temp = *commandA; 
+	*commandA = *commandB; 
+	*commandB = temp; 
+}
+
+
+
+
+
+
+
+
 
 /*----------INTERRUPTS----------------------------------------------------------*/

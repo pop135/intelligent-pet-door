@@ -34,27 +34,6 @@
 
 /*----------INCLUDES-------------------------------------------------------------*/
 
-/*----------DEFINES--------------------------------------------------------------*/
-
-#define TIME_BETWEN_DE_AND_NA	( 2000 )
-
-/*----------TYPEDEFS------------------------------------------------------------*/
-
-/* Data type to store a next action command */
-typedef struct nextAction {
-	
-	/* 0 = open
-	 * 1 = in
-	 * 2 = out
-	 * 3 = close 
-	 */
-	int movement;
-	
-	int npetsIn;
-	int npetsOut;
-	
-} nextAction;
-
 /*----------VARIABLES-----------------------------------------------------------*/
 
 /* Stores the next action if any */
@@ -67,8 +46,12 @@ extern int npetsOut;
 
 /*----------FUNCTIONS-----------------------------------------------------------*/
 
+/* Next action init */
 void initCheckNextAction(){
+	
+	/* Initialize the variable */
 	clearNextAction();
+	
 }
 
 /* Checks if there are next action issued */
@@ -83,7 +66,7 @@ void checkNextAction(){
 		/* Not actually in a door event */
 		(doorEventEnd != 0) && 
 		
-		/* Time between door event and next action  */
+		/* Time between door event and next action has passed */
 		((millis() - doorEventEnd) > TIME_BETWEN_DE_AND_NA)){
 		
 		#ifdef DEBUG
@@ -91,54 +74,74 @@ void checkNextAction(){
 			Serial.print(doorEventEnd,DEC);
 		#endif
 		
-
+		/* Open movement */
 		if(action.movement == 0){
+			
+			/* Debug code */
 			#ifdef DEBUG
 				Serial.print(F("Conditions met. Programmed action open done"));
 			#endif
 			
+			/* Actually do the action */
 			open();
+			
+			/* Inform user */
 			sendMessageToAllUsers(F("/when Conditions met. Door opened!"));
 		
 		}
-		//in (servo0 = open and servo1 = close)
+		/* In movement */
 		else if(action.movement == 1){
+			
+			/* Debug code */
 			#ifdef DEBUG
 				Serial.print(F("Conditions met. Programmed action in done."));
 			#endif
 			
+			/* Actually do the action */
 			in();
+			
+			/* Inform user */
 			sendMessageToAllUsers(F("/when Conditions met. Pets can just come in now!"));
 		
 		}
-		//out (servo0 = close and servo1 = open)
+		/* Out movement */
 		else if(action.movement == 2){
+			
+			/* Debug code */
 			#ifdef DEBUG
 				Serial.print(F("Conditions met. Programmed action out done."));
 			#endif
 			
+			/* Actually do the action */
 			out();
+			
+			/* Inform user */
 			sendMessageToAllUsers(F("/when Conditions met. Pets can just go out now!"));
 		}
-		//close (servo0 = close and servo 1 = close)
+		/* Close movement */
 		else if(action.movement == 3){
+			
+			/* Debug code */
 			#ifdef DEBUG
 				Serial.print(F("Conditions met. Programmed action close done."));
 			#endif
 			
+			/* Actually do the action */
 			close();
+			
+			/* Inform user */
 			sendMessageToAllUsers(F("/when Conditions met. Door closed!"));
 		}
 
 		
-		//command done so clear it
+		/* Next action already done, so clear the variable */
 		clearNextAction();
 	}
 }
 
-/* Resets next action variable to default value */
+/* Sets next action variable to default value */
 void clearNextAction(){
-	action.movement = -1;
+	action.movement = 0xFF;
 }
 
 /*----------INTERRUPTS----------------------------------------------------------*/

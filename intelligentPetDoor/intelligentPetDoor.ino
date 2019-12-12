@@ -34,18 +34,37 @@
 
 /*----------INCLUDES-------------------------------------------------------------*/
 
+/* Include defines file */
+#include "defines.h"
+
+/* Include typedefs file */
+#include "typedefs.h"
+
 /*----------DEFINES--------------------------------------------------------------*/
 
 /* Uncoment this line to allow debug info to be shown througth the serial. */
 #define DEBUG 1
 
-/*----------TYPEDEFS------------------------------------------------------------*/
-
-
-
 /*----------VARIABLES-----------------------------------------------------------*/
 
-int npets = 2; //hardcoded!!!
+/*----------PROTOTIPES----------------------------------------------------------*/
+
+extern void initSerial();
+extern void initServo();
+extern void initISR();
+extern void initRTC();
+extern void adjustRTC();
+extern void initSchedule();
+extern void initCheckButtons();
+extern void initCheckCommand();
+extern void initCheckNextAction();
+extern void initUsers();
+extern void initPets();
+extern void	checkSerial();
+extern void	checkCommand();
+extern void	checkNextAction();
+extern void	checkSchedule();
+extern void	checkButtons();
 
 /*----------FUNCTIONS-----------------------------------------------------------*/
 
@@ -75,23 +94,29 @@ void setup() {
 	/* Initialize some variables to allow schedule related functions to run properly */
 	initSchedule();
 	
+	/* Initialize pet variables */
+	initPets();
+	
 	/* Initialize the variables of checkButtons to allow sensors ISR treatment */
 	initCheckButtons();
 	
+	/* Initialize the variable where command will be stored */
 	initCheckCommand();
 	
+	/* Initialize the variable where the next command will be stored */
 	initCheckNextAction();
 	
+	/* Read EEPROM and initialize user variables */
 	initUsers();
-
+	
 	/* Initialize wireless module */
 	
-
 }
 
 /* Common loop function in all arduino projects. Main program goes here and iterates forever. Super-loop. */
 void loop() {
 	
+	/* Check if something is recieved from ESP8266 */
 	checkSerial();
 	
 	/* Checks if user has issued a command */
@@ -100,7 +125,7 @@ void loop() {
 	/* Checks if programmed next action has to be done */
 	checkNextAction();
 	
-	/* Checks if something programmed has to be done */
+	/* Checks if something scheduled has to be done */
 	checkSchedule();
 	
 	/* Checks if sensors have detected some movement */

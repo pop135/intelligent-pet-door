@@ -34,85 +34,67 @@
 
 /*----------INCLUDES-------------------------------------------------------------*/
 
-
-
-/*----------DEFINES--------------------------------------------------------------*/
-
-/* Number of maxium words that an issued command could have */
-#define MAX_WORDS 	( 6 )
-
-/*----------TYPEDEFS------------------------------------------------------------*/
-
 /*----------VARIABLES-----------------------------------------------------------*/
 
-
-
-//int errorCount=0;
-extern int nUsers;
-
-
+extern uint8_t nUsers;
+extern uint8_t npets;
 
 /*----------FUNCTIONS-----------------------------------------------------------*/
 
-
-
+/* Checks input from user, understands it and do the proper actions */
 void parseInput(){
 
+	/* Auxiliar variables to allow input treatment */
+	int endFirstWord = 0;
+	int nwords=0;
+	String word;
+	String input;
 	
-		
-		/* Auxiliar variables to allow input treatment */
-		int endFirstWord = 0;
-		int nwords=0;
-		String word;
-		String input;
-		
-		/* Array to store all the words of the command */
-		String words[MAX_WORDS+1];
-		
-		/* Actually read and store the input */
-		input = msg.text; 
-		input.trim();
-		input.toLowerCase();
-		
-		#ifdef DEBUG
-			Serial.print("User: ");
-			Serial.print(msg.id);
-			Serial.print(" Msg recieved: \"");
-			Serial.print(input);
-			Serial.println("\"");
-		#endif
-		
-		/* Initialize the words array */
-		for(int i=0;i<MAX_WORDS+1;i++){
-			words[i]="";
-		}
+	/* Array to store all the words of the command */
+	String words[MAX_WORDS+1];
+	
+	/* Actually read and store the input */
+	input = msg.text; 
+	input.trim();
+	input.toLowerCase();
+	
+	#ifdef DEBUG
+		Serial.print(F("User: "));
+		Serial.print(msg.id);
+		Serial.print(F(" Msg recieved: \""));
+		Serial.print(input);
+		Serial.println(F("\""));
+	#endif
+	
+	/* Initialize the words array */
+	for(int i=0;i<MAX_WORDS+1;i++){
+		words[i]="";
+	}
 
-		/* Getting all the words that conforms the command into separate positions of the array */
-		while(endFirstWord != -1 && nwords < MAX_WORDS+1){
-			
-			endFirstWord = input.indexOf(' ');
-			if(endFirstWord != -1){
-				word = input.substring(0,endFirstWord);
-			}
-			else{
-				word = input;
-			}
-			input.remove(0,endFirstWord);
-			input.trim();
-			words[nwords] = word;
-			nwords++;
-				
+	/* Getting all the words that conforms the command into separate positions of the array */
+	while(endFirstWord != -1 && nwords < MAX_WORDS+1){
+		
+		endFirstWord = input.indexOf(' ');
+		if(endFirstWord != -1){
+			word = input.substring(0,endFirstWord);
 		}
+		else{
+			word = input;
+		}
+		input.remove(0,endFirstWord);
+		input.trim();
+		words[nwords] = word;
+		nwords++;
+			
+	}
+	
+	/* In case that the string is longer than maxium words command*/
+	serialFlush();
 		
-		/* In case that the string is longer than maxium words command*/
-		serialFlush();
-		
-		
-		
-		
+	/* First you have to be a registered user */	
 	if(!validUser(msg.id)){
 		if(nUsers < MAX_USERS){
-			if((words[0].equals("/start")) && (words[1].equals(""))){
+			if((words[0].equals(F("/start"))) && (words[1].equals(F("")))){
 				saveUser(msg.id);
 				sendMessage(msg.id,F("Now you are a user!"));
 			}
@@ -125,21 +107,63 @@ void parseInput(){
 		}
 	}
 	
+	/* Second you have to set up number of pets */
+	else if(npets == 0xFF){
+		if(words[0].equals(F("/pet"))){
+			if((words[1].equals(F("number"))) || (words[1].equals(F("n")))){
+				int npetsAux = stringToInt(words[2]);
+				if(npetsAux > 0 && npetsAux < 255){
+					if(words[3].equals(F(""))){
+						definePetsNumber(npetsAux);
+					}
+					else{
+						sendMessage(msg.id,F("No defined pets. Try /pet number {your number of pets}"));
+						return;
+					}
+				}
+				else{
+					sendMessage(msg.id,F("No defined pets. Try /pet number {your number of pets}"));
+					return;
+				}
+			}
+			else{
+				sendMessage(msg.id,F("No defined pets. Try /pet number {your number of pets}"));
+				return;
+			}
+		}
+		else{
+			sendMessage(msg.id,F("No defined pets. Try /pet number {your number of pets}"));
+			return;
+		}
+	}
+	
+	/* Now you can send commands */
 	else{
 		
 		/* Understanding the command issued */
-		
-		if (words[0].equals("/user")){
-			if(words[1].equals("del")){
-				if(words[2].equals("")){
+		if ((words[0].equals(F("/user"))) || (words[0].equals(F("/u")))){
+			if(words[1].equals(F("del"))){
+				if(words[2].equals(F(""))){
 					delUser(msg.id);
 					sendMessage(msg.id,F("You are no longer a valid user."));
 				}
 				else{
 					getUser(msg.id)->errorcount++;
 					errorHandler(msg.id,getUser(msg.id)->errorcount);
-				return;
+					return;
+				}
 			}
+			else if((words[1].equals(F("tnotifications"))) || (words[1].equals(F("tn")))){
+				if(words[2].equals(F(""))){
+					uint8_t newNotificationsValue = toggleNotifications(msg.id);
+					if(newNotificationsValue & 0x01) sendMessage(msg.id,F("Notifications enabled 💪"));
+					else sendMessage(msg.id,F("Notifications disabled 👎"));
+				}
+				else{
+					getUser(msg.id)->errorcount++;
+					errorHandler(msg.id,getUser(msg.id)->errorcount);
+					return;
+				}
 			}
 			else{
 				getUser(msg.id)->errorcount++;
@@ -148,10 +172,58 @@ void parseInput(){
 			}
 		}
 		
-		else if(words[0].equals("/open")){
+		else if(words[0].equals(F("/pet"))){
+			if((words[1].equals(F("number"))) || (words[1].equals(F("n")))){
+				int npetsAux = stringToInt(words[2]);
+				if(npetsAux > 0 && npetsAux < 255){
+					if(words[3].equals(F(""))){
+						definePetsNumber(npetsAux);
+						
+						#ifdef DEBUG
+							Serial.println((String) F("Number of pets updated to ") + npets);
+						#endif
+						
+						sendMessage(msg.id,(String) F("Number of pets updated to ") + npets);
+						
+					}
+					else{
+						getUser(msg.id)->errorcount++;
+						errorHandler(msg.id,getUser(msg.id)->errorcount);
+						return;
+					}
+				}
+				else{
+					getUser(msg.id)->errorcount++;
+					errorHandler(msg.id,getUser(msg.id)->errorcount);
+					return;
+				}
+			}
+			else if((words[1].equals(F("show"))) || (words[1].equals(F("sh")))){
+				
+				if(words[2].equals(F(""))){
+					#ifdef DEBUG
+						Serial.println((String) F("You have ") + npets + F("pets defined."));
+					#endif
+					
+					sendMessage(msg.id,(String) F("You have ") + npets + F("pets defined."));
+				}
+				else{
+					getUser(msg.id)->errorcount++;
+					errorHandler(msg.id,getUser(msg.id)->errorcount);
+					return;
+				}
+			}
+			else{
+				getUser(msg.id)->errorcount++;
+				errorHandler(msg.id,getUser(msg.id)->errorcount);
+				return;
+			}
+		}
+		
+		else if(words[0].equals(F("/open"))){
 			command.commandName = 0;
 			command.movement = 0;
-			if(words[1].equals("")){
+			if(words[1].equals(F(""))){
 				getUser(msg.id)->errorcount = 0;
 				return;
 			}
@@ -162,10 +234,10 @@ void parseInput(){
 				return;
 			}
 		}
-		else if(words[0].equals("/in")){
+		else if(words[0].equals(F("/in"))){
 			command.commandName = 0;
 			command.movement = 1;
-			if(words[1].equals("")){
+			if(words[1].equals(F(""))){
 				getUser(msg.id)->errorcount = 0;
 				return;
 			}
@@ -176,10 +248,10 @@ void parseInput(){
 				return;
 			}
 		}
-		else if(words[0].equals("/out")){
+		else if(words[0].equals(F("/out"))){
 			command.commandName = 0;
 			command.movement = 2;
-			if(words[1].equals("")){
+			if(words[1].equals(F(""))){
 				getUser(msg.id)->errorcount = 0;
 				return;
 			}
@@ -190,10 +262,10 @@ void parseInput(){
 				return;
 			}
 		}
-		else if(words[0].equals("/close")){
+		else if(words[0].equals(F("/close"))){
 			command.commandName = 0;
 			command.movement = 3;
-			if(words[1].equals("")){
+			if(words[1].equals(F(""))){
 				getUser(msg.id)->errorcount = 0;
 				return;
 			}
@@ -205,12 +277,12 @@ void parseInput(){
 			}
 		}
 
-		else if (words[0].equals("/prog")){
+		else if (words[0].equals(F("/prog")) || words[0].equals(F("/program")) || words[0].equals(F("/p"))){
 			command.commandName = 1;
 			int modifierFlag = 0;
 			
-			if(words[1].equals("show")){
-				if(words[2].equals("")){
+			if(words[1].equals(F("show")) || words[1].equals(F("sh"))){
+				if(words[2].equals(F(""))){
 					command.modifierFlag = 2;
 					getUser(msg.id)->errorcount = 0;
 					return;
@@ -223,9 +295,9 @@ void parseInput(){
 				}
 			}
 			
-			if (words[1].equals("del")){
-				if(words[2].equals("all")){
-					if(words[3].equals("")){
+			if (words[1].equals(F("del"))){
+				if(words[2].equals(F("all"))){
+					if(words[3].equals(F(""))){
 						command.modifierFlag = 3;
 						getUser(msg.id)->errorcount = 0;
 						return;
@@ -247,10 +319,10 @@ void parseInput(){
 				if (checkDateIntegrity(words[2+modifierFlag]) == 0){
 					if(!modifierFlag){
 						command.modifierFlag = 0;
-						if(words[3+modifierFlag].equals("open")){command.movement = 0;}
-						else if (words[3+modifierFlag].equals("in")){command.movement = 1;}
-						else if (words[3+modifierFlag].equals("out")){command.movement = 2;}
-						else if (words[3+modifierFlag].equals("close")){command.movement = 3;}
+						if(words[3+modifierFlag].equals(F("open"))){command.movement = 0;}
+						else if (words[3+modifierFlag].equals(F("in"))){command.movement = 1;}
+						else if (words[3+modifierFlag].equals(F("out"))){command.movement = 2;}
+						else if (words[3+modifierFlag].equals(F("close"))){command.movement = 3;}
 						else{
 							getUser(msg.id)->errorcount++;
 							errorHandler(msg.id,getUser(msg.id)->errorcount);
@@ -258,7 +330,7 @@ void parseInput(){
 							return;
 						}
 					}
-					if(words[4].equals("")){
+					if(words[4].equals(F(""))){
 						getUser(msg.id)->errorcount = 0;
 						return;
 					}
@@ -284,27 +356,29 @@ void parseInput(){
 				return;
 			}
 		}
-		else if(words[0].equals("/when")){
-			int actionIssued = action.movement;
+		else if(words[0].equals(F("/when"))){
+			uint8_t actionIssued = action.movement;
 			int movement;
-			if(words[1].equals("allin")){
-				if(words[2].equals("open")){movement = 0;}
-				else if (words[2].equals("in")){movement = 1;}
-				else if (words[2].equals("out")){movement = 2;}
-				else if (words[2].equals("close")){movement = 3;}
+			if(words[1].equals(F("allin"))){
+				if(words[2].equals(F("open"))){movement = 0;}
+				else if (words[2].equals(F("in"))){movement = 1;}
+				else if (words[2].equals(F("out"))){movement = 2;}
+				else if (words[2].equals(F("close"))){movement = 3;}
 				else{
 					getUser(msg.id)->errorcount++;
 					errorHandler(msg.id,getUser(msg.id)->errorcount);
 					return;
 				}
-				if(words[3].equals("")){
-					if(actionIssued == -1){
-						/*AQUEST SERIAL S'HA DE MOURE A CHECKNEXTACTION()*/
-						Serial.print(F("You entered: /when allin "));
-						if(movement == 0){Serial.println("open");}
-						else if(movement == 1){Serial.println("in");}
-						else if(movement == 2){Serial.println("out");}
-						else if(movement == 3){Serial.println("close");}
+				if(words[3].equals(F(""))){
+					if(actionIssued == 0xFF){
+						#ifdef DEBUG
+							Serial.print(F("You entered: /when allin "));
+							if(movement == 0){Serial.println(F("open"));}
+							else if(movement == 1){Serial.println(F("in"));}
+							else if(movement == 2){Serial.println(F("out"));}
+							else if(movement == 3){Serial.println(F("close"));}
+						#endif
+						
 						action.movement = movement;
 						action.npetsIn = npets;
 						action.npetsOut = 0;
@@ -323,24 +397,26 @@ void parseInput(){
 					return;
 				}
 			}
-			else if(words[1].equals("allout")){
-				if(words[2].equals("open")){movement = 0;}
-				else if (words[2].equals("in")){movement = 1;}
-				else if (words[2].equals("out")){movement = 2;}
-				else if (words[2].equals("close")){movement = 3;}
+			else if(words[1].equals(F("allout"))){
+				if(words[2].equals(F("open"))){movement = 0;}
+				else if (words[2].equals(F("in"))){movement = 1;}
+				else if (words[2].equals(F("out"))){movement = 2;}
+				else if (words[2].equals(F("close"))){movement = 3;}
 				else{
 					getUser(msg.id)->errorcount++;
 					errorHandler(msg.id,getUser(msg.id)->errorcount);
 					return;
 				}
-				if(words[3].equals("")){
-					if(actionIssued == -1){
-						/*AQUEST SERIAL S'HA DE MOURE A CHECKNEXTACTION()*/
-						Serial.print(F("You entered: /when allout "));
-						if(movement == 0){Serial.println("open");}
-						else if(movement == 1){Serial.println("in");}
-						else if(movement == 2){Serial.println("out");}
-						else if(movement == 3){Serial.println("close");}
+				if(words[3].equals(F(""))){
+					if(actionIssued == 0xFF){
+						#ifdef DEBUG
+							Serial.print(F("You entered: /when allout "));
+							if(movement == 0){Serial.println(F("open"));}
+							else if(movement == 1){Serial.println(F("in"));}
+							else if(movement == 2){Serial.println(F("out"));}
+							else if(movement == 3){Serial.println(F("close"));}
+						#endif
+						
 						action.movement = movement;
 						action.npetsIn = 0;
 						action.npetsOut = npets;
@@ -360,30 +436,32 @@ void parseInput(){
 				}
 			}
 			else if(stringToInt(words[1]) != -1){
-				if(words[2].equals("in")){
+				if(words[2].equals(F("in"))){
 					if(stringToInt(words[3]) != -1){
-						if(words[4].equals("out")){
-							if(words[5].equals("open")){movement = 0;}
-							else if (words[5].equals("in")){movement = 1;}
-							else if (words[5].equals("out")){movement = 2;}
-							else if (words[5].equals("close")){movement = 3;}
+						if(words[4].equals(F("out"))){
+							if(words[5].equals(F("open"))){movement = 0;}
+							else if (words[5].equals(F("in"))){movement = 1;}
+							else if (words[5].equals(F("out"))){movement = 2;}
+							else if (words[5].equals(F("close"))){movement = 3;}
 							else{
 								getUser(msg.id)->errorcount++;
 								errorHandler(msg.id,getUser(msg.id)->errorcount);
 								return;
 							}
-							if(words[6].equals("")){
+							if(words[6].equals(F(""))){
 								if((words[1].toInt() + words[3].toInt()) == npets){
-									if(actionIssued == -1){
-										/*AQUEST SERIAL S'HA DE MOURE A CHECKNEXTACTION()*/
-										Serial.print(F("You entered: /when "));
-										Serial.print(words[1].toInt());
-										Serial.print(F(" in "));
-										Serial.print(words[3].toInt());
-										if(movement == 0){Serial.println(F(" out open"));}
-										else if(movement == 1){Serial.println(F(" out in"));}
-										else if(movement == 2){Serial.println(F(" out out"));}
-										else if(movement == 3){Serial.println(F(" out close"));}
+									if(actionIssued == 0xFF){
+										#ifdef DEBUG
+											Serial.print(F("You entered: /when "));
+											Serial.print(words[1].toInt());
+											Serial.print(F(" in "));
+											Serial.print(words[3].toInt());
+											if(movement == 0){Serial.println(F(" out open"));}
+											else if(movement == 1){Serial.println(F(" out in"));}
+											else if(movement == 2){Serial.println(F(" out out"));}
+											else if(movement == 3){Serial.println(F(" out close"));}
+										#endif
+										
 										action.movement = movement;
 										action.npetsIn = words[1].toInt();
 										action.npetsOut = words[3].toInt();
@@ -421,30 +499,32 @@ void parseInput(){
 						return;
 					}
 				}
-				else if (words[2].equals("out")){
+				else if (words[2].equals(F("out"))){
 					if(stringToInt(words[3]) != -1){
-						if(words[4].equals("in")){
-							if(words[5].equals("open")){movement = 0;}
-							else if (words[5].equals("in")){movement = 1;}
-							else if (words[5].equals("out")){movement = 2;}
-							else if (words[5].equals("close")){movement = 3;}
+						if(words[4].equals(F("in"))){
+							if(words[5].equals(F("open"))){movement = 0;}
+							else if (words[5].equals(F("in"))){movement = 1;}
+							else if (words[5].equals(F("out"))){movement = 2;}
+							else if (words[5].equals(F("close"))){movement = 3;}
 							else{
 								getUser(msg.id)->errorcount++;
 								errorHandler(msg.id,getUser(msg.id)->errorcount);
 								return;
 							}
-							if(words[6].equals("")){
+							if(words[6].equals(F(""))){
 								if((words[1].toInt() + words[3].toInt()) == npets){
-									if(actionIssued == -1){
-										/*AQUEST SERIAL S'HA DE MOURE A CHECKNEXTACTION()*/
-										Serial.print(F("You entered: /when "));
-										Serial.print(words[1].toInt());
-										Serial.print(F(" out "));
-										Serial.print(words[3].toInt());
-										if(movement == 0){Serial.println(F(" in open"));}
-										else if(movement == 1){Serial.println(F(" in in"));}
-										else if(movement == 2){Serial.println(F(" in out"));}
-										else if(movement == 3){Serial.println(F(" in close"));}
+									if(actionIssued == 0xFF){
+										#ifdef DEBUG
+											Serial.print(F("You entered: /when "));
+											Serial.print(words[1].toInt());
+											Serial.print(F(" out "));
+											Serial.print(words[3].toInt());
+											if(movement == 0){Serial.println(F(" in open"));}
+											else if(movement == 1){Serial.println(F(" in in"));}
+											else if(movement == 2){Serial.println(F(" in out"));}
+											else if(movement == 3){Serial.println(F(" in close"));}
+										#endif
+										
 										action.movement = movement;
 										action.npetsIn = words[3].toInt();
 										action.npetsOut = words[1].toInt();
@@ -488,21 +568,42 @@ void parseInput(){
 					return;
 				}
 			}
-			else if(words[1].equals("show")){
-				if(words[2].equals("")){
-					if(actionIssued != -1){
-						/*AQUEST SERIAL S'HA DE MOURE A CHECKNEXTACTION()*/
-						Serial.println(F("You entered: /when show"));
-						Serial.print(F("Next action: "));
-						if(action.movement == 0){Serial.print(F("open"));}
-						else if(action.movement == 1){Serial.print(F("in"));}
-						else if(action.movement == 2){Serial.print(F("out"));}
-						else if(action.movement == 3){Serial.print(F("close"));}
-						Serial.print(F(" when "));
-						Serial.print(action.npetsIn);
-						Serial.print(F(" IN and "));
-						Serial.print(action.npetsOut);
-						Serial.println(F(" OUT."));
+			else if(words[1].equals(F("show"))){
+				if(words[2].equals(F(""))){
+					if(actionIssued != 0xFF){
+						#ifdef DEBUG
+							Serial.println(F("You entered: /when show"));
+							Serial.print(F("Next action: "));
+							if(action.movement == 0){Serial.print(F("open"));}
+							else if(action.movement == 1){Serial.print(F("in"));}
+							else if(action.movement == 2){Serial.print(F("out"));}
+							else if(action.movement == 3){Serial.print(F("close"));}
+							Serial.print(F(" when "));
+							Serial.print(action.npetsIn);
+							Serial.print(F(" IN and "));
+							Serial.print(action.npetsOut);
+							Serial.println(F(" OUT."));
+						#endif
+						
+						if(action.npetsIn == npets) {
+							if(action.movement == 0) sendMessage(msg.id,F("When all pets are inside I will OPEN the door"));
+							else if(action.movement == 1) sendMessage(msg.id,F("When all pets are inside I will set the door at IN position"));
+							else if(action.movement == 2) sendMessage(msg.id,F("When all pets are inside I will set the door at OUT position"));
+							else if(action.movement == 3) sendMessage(msg.id,F("When all pets are inside I will CLOSE the door"));
+						}
+						else if (action.npetsOut == npets) {
+							if(action.movement == 0) sendMessage(msg.id,F("When all pets are outside I will OPEN the door"));
+							else if(action.movement == 1) sendMessage(msg.id,F("When all pets are outside I will set the door at IN position"));
+							else if(action.movement == 2) sendMessage(msg.id,F("When all pets are outside I will set the door at OUT position"));
+							else if(action.movement == 3) sendMessage(msg.id,F("When all pets are outside I will CLOSE the door"));
+						}
+						else{
+							if(action.movement == 0) sendMessage(msg.id,(String)F("When ")+ action.npetsIn +F(" pets are inside and ")+action.npetsOut+F(" are outside I will OPEN the door"));
+							else if(action.movement == 1) sendMessage(msg.id,(String)F("When ")+ action.npetsIn +F("pets are inside and ")+action.npetsOut+F(" are outside I will set the door at IN position"));
+							else if(action.movement == 2) sendMessage(msg.id,(String)F("When ")+ action.npetsIn +F("pets are inside and ")+action.npetsOut+F(" are outside I will set the door at OUT position"));
+							else if(action.movement == 3) sendMessage(msg.id,(String)F("When ")+ action.npetsIn +F("pets are inside and ")+action.npetsOut+F(" are outside I will CLOSE the door"));
+						}
+						
 						getUser(msg.id)->errorcount = 0;
 					}
 					else{
@@ -517,11 +618,13 @@ void parseInput(){
 					return;
 				}
 			}
-			else if(words[1].equals("del")){
-				if(words[2].equals("")){
-					if(actionIssued != -1){
-						/*AQUEST SERIAL S'HA DE MOURE A CHECKNEXTACTION()*/
-						Serial.println(F("You entered: /when del"));
+			else if(words[1].equals(F("del"))){
+				if(words[2].equals(F(""))){
+					if(actionIssued != 0xFF){
+						#ifdef DEBUG
+							Serial.println(F("You entered: /when del"));
+						#endif
+						
 						clearNextAction();
 						getUser(msg.id)->errorcount = 0;
 						sendMessage(msg.id,F("/when command deleted!"));
@@ -545,7 +648,7 @@ void parseInput(){
 			}
 		
 		}
-		else if(words[0].equals("/where")){
+		else if(words[0].equals(F("/where"))){
 			if(words[1].equals("")){
 				command.commandName = 2;
 				getUser(msg.id)->errorcount = 0;
@@ -556,28 +659,28 @@ void parseInput(){
 				return;
 			}
 		}
-		else if (words[0].equals("/help")){
+		else if (words[0].equals(F("/help"))){
 			if(words[1].equals("") && words[2].equals("")){
 				showHelp(msg.id,0);
 				getUser(msg.id)->errorcount = 0;
 			}
-			else if(words[1].equals("usual") && words[2].equals("")){
+			else if(words[1].equals(F("usual")) && words[2].equals("")){
 				showHelp(msg.id,1);
 				getUser(msg.id)->errorcount = 0;
 			}
-			else if(words[1].equals("prog") && words[2].equals("")){
+			else if(words[1].equals(F("prog")) && words[2].equals("")){
 				showHelp(msg.id,2);
 				getUser(msg.id)->errorcount = 0;
 			}
-			else if(words[1].equals("when") && words[2].equals("")){
+			else if(words[1].equals(F("when")) && words[2].equals("")){
 				showHelp(msg.id,3);
 				getUser(msg.id)->errorcount = 0;
 			}
-			else if(words[1].equals("actions") && words[2].equals("")){
+			else if(words[1].equals(F("actions")) && words[2].equals("")){
 				showHelp(msg.id,4);
 				getUser(msg.id)->errorcount = 0;
 			}
-			else if(words[1].equals("dow") && words[2].equals("")){
+			else if(words[1].equals(F("dow")) && words[2].equals("")){
 				showHelp(msg.id,5);
 				getUser(msg.id)->errorcount = 0;
 			}

@@ -32,49 +32,69 @@
  *
  */
 
-/*----------INCLUDES-------------------------------------------------------------*/
-
-/* The EEPROM default arduino library */
-#include <EEPROM.h>
-
-/*----------DEFINES--------------------------------------------------------------*/
-
-/* Numer of pets pos */
-#define NUMBER_OF_PETS_POS ( 0 )
-
-/* Schedule pos */
-#define SCHEDULE_POS ( 2 )
-
-/* The maxium of scheduled commands that can be stored */
-#define MAX_SCHEDULE 	( 100 )
-
-/* Schedule pos */
-#define USERS_POS ( 203 )
-
-/* The maxium of scheduled commands that can be stored */
-#define MAX_USERS 	( 4 )
-
 /*----------TYPEDEFS------------------------------------------------------------*/
 
-/*----------VARIABLES-----------------------------------------------------------*/
-
-
-
-/*----------FUNCTIONS-----------------------------------------------------------*/
-
-uint8_t readEEPROM(int p){
+/* Data type to store a command. */
+typedef struct commandIssued {
 	
-	return EEPROM.read(p);
+	/* 0 = /now
+	 * 1 = /program
+	 * 2 = /where
+	 */
+	uint8_t commandName;
 	
+	uint8_t day;
+	uint8_t hour;
+	uint8_t minute;
 	
-}
+	/* 0 = open
+	 * 1 = in
+	 * 2 = out
+	 * 3 = close 
+	 */
+	uint8_t movement; 
+	
+	/* 0 = schedule command
+ 	 * 1 = delete scheduled command
+ 	 * 2 = show scheduled commands
+	 * 3 = delete all scheduled commands 
+	 */
+	uint8_t modifierFlag;
+	
+} commandIssued; 
 
-void writeEEPROM(int p, uint8_t d){
+typedef struct EEPROMStoredCommand {
+	uint8_t day;
+	uint8_t hour;
+	uint8_t minute;
+	uint8_t movement;
 	
-	EEPROM.write(p,d);
-	
-	
-}
+} EEPROMStoredCommand;
 
-/*----------INTERRUPTS----------------------------------------------------------*/
+/* Data type to store a next action command */
+typedef struct nextAction {
+	
+	/* 0 = open
+	 * 1 = in
+	 * 2 = out
+	 * 3 = close 
+	 */
+	uint8_t movement;
+	
+	uint8_t npetsIn;
+	uint8_t npetsOut;
+	
+} nextAction;
 
+/* To store messages sent to ESP8266 */
+typedef struct simpleTBMessage {
+	uint32_t id;
+	char text[MESSAGE_TEXT_LENGTH];
+} simpleTBMessage;
+
+/* To store user related info */
+typedef struct User {
+	uint32_t id;
+	uint8_t errorcount;
+	uint8_t notificationsEnabled;
+} User;

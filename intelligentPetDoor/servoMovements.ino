@@ -37,20 +37,6 @@
 /* The servo default arduino library */
 #include <Servo.h>
 
-/*----------DEFINES--------------------------------------------------------------*/
-
-/* The PCB pins that are attached to servos  */
-#define SERVO_PIN_0		( 9 )
-#define SERVO_PIN_1		( 10 )
-#define SERVO_PIN_2		( 11 )
-
-/* Define degrees for servo positions */
-#define SERVO_OPEN		( 90 )
-#define SERVO_CLOSE_180	( 180 )
-#define SERVO_CLOSE_0	( 0 )
-
-/*----------TYPEDEFS------------------------------------------------------------*/
-
 /*----------VARIABLES-----------------------------------------------------------*/
 
 /* The servo objects */

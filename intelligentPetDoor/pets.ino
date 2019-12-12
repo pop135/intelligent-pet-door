@@ -34,52 +34,40 @@
 
 /*----------INCLUDES-------------------------------------------------------------*/
 
+/*----------DEFINES--------------------------------------------------------------*/
+
+/*----------TYPEDEFS------------------------------------------------------------*/
+
 /*----------VARIABLES-----------------------------------------------------------*/
 
-/* Flags that allow checkButtonISR know if some sensor has detected movement */
-volatile char inOutFlag;
-volatile char outInFlag;
+uint8_t npets; 
 
 /*----------FUNCTIONS-----------------------------------------------------------*/
 
-void initISR(){
+void initPets(){
 	
-	/* Set up initial value of ISR flags */
-	inOutFlag=0;
-	outInFlag=0;
-	
-	/* Attach given interrupts to given PCB pins */
-	attachInterrupt(digitalPinToInterrupt(BUTTON_PIN_0), buttonInOutISR, FALLING);
-	attachInterrupt(digitalPinToInterrupt(BUTTON_PIN_1), buttonOutInISR, FALLING);
-	
-	/* Debug code */
+	npets = readEEPROM(NUMBER_OF_PETS_POS);
+		
 	#ifdef DEBUG
-		Serial.print(F("Sensor IN->OUT value (Arduino pin #"));
-		Serial.print(BUTTON_PIN_0,DEC);
-		Serial.print(F("): "));
-		Serial.println(digitalRead(BUTTON_PIN_0));
-		Serial.print(F("Sensor OUT->IN value (Arduino pin #"));
-		Serial.print(BUTTON_PIN_1,DEC);
-		Serial.print(F("): "));
-		Serial.println(digitalRead(BUTTON_PIN_1));
+		Serial.print(F("Number of pets defined: "));
+		if(npets == 0xFF)	Serial.println(F("No pets defined"));
+		else Serial.println(npets);
 	#endif
 	
 }
 
+void definePetsNumber(uint8_t n){
+	
+	npets = n;
+	writeEEPROM(NUMBER_OF_PETS_POS,n);
+	npetsIn = n;
+	npetsOut = 0;
+	clearNextAction();
+			
+}
+
+
+
+
+
 /*----------INTERRUPTS----------------------------------------------------------*/
-
-/* IN->OUT sensor ISR */
-void buttonInOutISR(){
-	
-	/* Just set the flag to allow further treatment */
-	inOutFlag = 1;
-	
-}
-
-/* OUT->IN sensor ISR */
-void buttonOutInISR(){
-	
-	/* Just set the flag to allow further treatment */
-	outInFlag=1;
-	
-}

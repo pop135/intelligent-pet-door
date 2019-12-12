@@ -34,13 +34,6 @@
 
 /*----------INCLUDES-------------------------------------------------------------*/
 
-/*----------DEFINES--------------------------------------------------------------*/
-
-/* One second time in ms */
-#define ONE_SECOND_MS	( 1000 )
-
-/*----------TYPEDEFS------------------------------------------------------------*/
-
 /*----------VARIABLES-----------------------------------------------------------*/
 
 /* Stores the minute before actual to allow further comparision */ 
@@ -67,7 +60,7 @@ void initSchedule(){
 	nschedule=0;
 	
 	/* Read the EEPROM looking for previous scheduled stored commands */
-	for(int i=2;i<(MAX_SCHEDULE*2);i=i+2){
+	for(int i=SCHEDULE_POS;i<(MAX_SCHEDULE*SCHEDULE_SIZE);i=i+SCHEDULE_SIZE){
 		if((EEPROM.read(i)&0x3F) != 0x3F){
 			nschedule++;
 		}
@@ -117,16 +110,16 @@ void checkSchedule(){
 
 		/* Debug code */
 		#ifdef DEBUG
-			Serial.print("Day: ");
+			Serial.print(F("Day: "));
 			Serial.print(dayOfWeek);
-			Serial.print(" Hour: ");
+			Serial.print(F(" Hour: "));
 			Serial.print(hour);
-			Serial.print(":");
+			Serial.print(F(":"));
 			Serial.print(minute);
 		#endif
 		
 		/* Reads all scheduled commands space of EEPROM */
-		for(int i=2;i<(MAX_SCHEDULE*2);i=i+2){
+		for(int i=SCHEDULE_POS;i<(MAX_SCHEDULE*SCHEDULE_SIZE);i=i+SCHEDULE_SIZE){
 			
 			/* If found a shceduled command */
 			schedule1 = EEPROM.read(i);
@@ -188,7 +181,7 @@ void checkSchedule(){
 						
 					}
 					
-					/* Action done so return. (It's not allowed to do store two actions in the same dow, hour & minute) */
+					/* Action done so return. (It's not allowed to store two actions in the same dow, hour & minute) */
 					return;
 					
 				}

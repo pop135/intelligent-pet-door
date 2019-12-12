@@ -34,19 +34,6 @@
 
 /*----------INCLUDES-------------------------------------------------------------*/
 
-/*----------DEFINES--------------------------------------------------------------*/
-
-/* Time to consider a door event ended (Closing door time debounce) */
-#define DOOR_EVENT_END_TIME_MS		( 2000 )
-
-/* Opening time debounce. It is the minium time that the door has to be opened to 
- * consider that a pet passed through it. Times under that limit are considered 
- * not a trespassing pet. 
- */
-#define DEBOUNCE_OPENING_TIME_MS	( 800 )
-
-/*----------TYPEDEFS------------------------------------------------------------*/
-
 /*----------VARIABLES-----------------------------------------------------------*/
 
 /* Used to count time since last ISR to actual ISR */
@@ -70,6 +57,7 @@ int npetsOut;
 /* Externally declared sensor ISR flags */
 extern volatile char inOutFlag;
 extern volatile char outInFlag;
+extern uint8_t npets;
 
 /* Debug code */
 #ifdef DEBUG
@@ -78,6 +66,7 @@ extern volatile char outInFlag;
 
 /*----------FUNCTIONS-----------------------------------------------------------*/
 
+/* Initialize variables */
 void initCheckButtons(){
 
 	/* Sets door event start and end timers to initial value */
@@ -97,6 +86,9 @@ void initCheckButtons(){
 	/* Debug code */
 	#ifdef DEBUG
 		isrCount=0;
+		
+		Serial.println((String) npetsIn + F(" pets inside and ") + npetsOut+ F(" outside"));
+		
 	#endif
 }
 
@@ -141,12 +133,12 @@ void checkButtons(){
 			/* Set the door event end time */
 			doorEventEnd = millis();
 			
-			tellUsers(doorEventType);
-			doorEventType = 0;
+			/* Inform users that someone has crossed the door */
+			tellUsers();
 			
 			/* Debug code */
 			#ifdef DEBUG
-				Serial.println("DOOR EVENT ENDED");
+				Serial.println(F("DOOR EVENT ENDED"));
 				isrCount=0;
 			#endif
 		}
@@ -180,7 +172,7 @@ void doorEvent(char direction){
 		
 		/* Debug code */
 		#ifdef DEBUG
-			Serial.print(": debounceFlag=");
+			Serial.print(F(": debounceFlag="));
 			Serial.print(debounceFlag,DEC);
 		#endif
 		
@@ -192,9 +184,9 @@ void doorEvent(char direction){
 		
 		/* Debug code */
 		#ifdef DEBUG
-			Serial.print(" lastButtonISRTime=");
+			Serial.print(F(" lastButtonISRTime="));
 			Serial.print(lastButtonISRTime,DEC);
-			Serial.println(" buttonISRTime= 0");
+			Serial.println(F(" buttonISRTime= 0"));
 		#endif
 
 	}
@@ -204,7 +196,7 @@ void doorEvent(char direction){
 	
 		/* Debug code */
 		#ifdef DEBUG
-			Serial.print(" debounceFlag=");
+			Serial.print(F(" debounceFlag="));
 			Serial.print(debounceFlag,DEC);
 		#endif
 	
@@ -213,9 +205,9 @@ void doorEvent(char direction){
 		
 		/* Debug code */
 		#ifdef DEBUG
-			Serial.print(" lastButtonISRTime=");
+			Serial.print(F(" lastButtonISRTime="));
 			Serial.print(lastButtonISRTime,DEC);
-			Serial.print(" buttonISRTime=");
+			Serial.print(F(" buttonISRTime="));
 			Serial.println(buttonISRTime,DEC);
 		#endif
 		
@@ -225,7 +217,7 @@ void doorEvent(char direction){
 			/* Stores the time of the pet crossing to allow next phase comparision */
 			//lastButtonISRTime = buttonISRTime;//millis();
 			
-			/* Advance of door event phase */
+			/* Since we have a confirmed door crossing, advance to next door event phase */
 			debounceFlag = 2;
 			
 			/* Call the functions to handle pet counters */
@@ -234,9 +226,15 @@ void doorEvent(char direction){
 			
 		}
 		
-		/* If the time between two last interupts is less than the limit. Treat that interrupts as an opening door debounce. In that case we don't advance to the next phase. */
+		/* If the time between two last interupts is less than the limit. Treat that interrupts 
+		 * as an opening door debounce. In that case we don't advance to the next phase. 
+		 */
 		else{
-			Serial.println(F("To fast. Opening door debounce."));
+			
+			/* Debug code */
+			#ifdef DEBUG 
+				Serial.println(F("To fast. Opening door debounce."));
+			#endif
 			
 			/* Update the last interrupt time to allow further comparision */
 			lastButtonISRTime = buttonISRTime;
@@ -254,8 +252,12 @@ void doorEvent(char direction){
 void inOutDoorEvent(){
 	
 	if(npetsIn > 0) {
+		
+		/* Set pet counters to correct values */
 		npetsOut++;
 		npetsIn--;
+		
+		/* Define a door event type */
 		doorEventType = 1;
 	
 		/* Debug code */
@@ -266,8 +268,6 @@ void inOutDoorEvent(){
 			Serial.print(npetsOut);
 			Serial.println(F("."));
 		#endif
-		
-		
 		
 	}
 	
@@ -285,8 +285,12 @@ void inOutDoorEvent(){
 void outInDoorEvent(){
 	
 	if(npetsOut > 0) {
+		
+		/* Set pet counters to correct values */
 		npetsOut--;
 		npetsIn++;
+		
+		/* Define a door event type */
 		doorEventType = 2;
 		
 		/* Debug code */
@@ -310,25 +314,35 @@ void outInDoorEvent(){
 	
 }
 
-void tellUsers(int e){
-	if(e==1){
+/* Send a message to inform users about the door event */
+void tellUsers(){
+	
+	/* If we have a pet going outside */
+	if(doorEventType==1){
 		
 		/* Debug code */
 		#ifdef DEBUG
 			Serial.println(F("Someone has gone outside."));
 		#endif
 		
-		sendMessageToAllUsers("Someone has gone outside 😸");
+		/* Send message to all users */
+		sendMessageToAllUsers(F("Someone has gone outside 😸"));
 	}
-	else if(e == 2){
+	
+	/* If we have a pet going inside */
+	else if(doorEventType == 2){
 		
 		/* Debug code */
 		#ifdef DEBUG
 			Serial.println(F("Someone has gone inside."));
 		#endif
 		
-		sendMessageToAllUsers("Someone has returned home");// 😻");
+		/* Send message to all users */
+		sendMessageToAllUsers(F("Someone has returned home 😻"));
 	}
+	
+	/* Reset the door event flag */
+	doorEventType = 0;
 	
 }
 

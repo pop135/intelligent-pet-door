@@ -37,23 +37,6 @@
 /* Library to define an alternative serial */
 #include <SoftwareSerial.h>
 
-/*----------DEFINES--------------------------------------------------------------*/
-
-/* Maxium message length */
-#define MESSAGE_TEXT_LENGTH	( 200 )
-
-/* Software RX and TX */
-#define SOFTWARE_RX	( 5 )
-#define SOFTWARE_TX	( 4 )
-
-/*----------TYPEDEFS------------------------------------------------------------*/
-
-/* To store messages sent to ESP8266 */
-typedef struct simpleTBMessage {
-	uint32_t id;
-	char text[MESSAGE_TEXT_LENGTH];
-} simpleTBMessage;
-
 /*----------VARIABLES-----------------------------------------------------------*/
 
 /* Software serial object */
@@ -61,6 +44,11 @@ SoftwareSerial ESP8266Serial(SOFTWARE_RX, SOFTWARE_TX);
 
 /* To store received messages from ESP8266 */
 simpleTBMessage msg;
+
+/*----------EXTERN--------------------------------------------------------------*/
+
+extern void parseInput();
+extern User users[MAX_USERS];
 
 /*----------FUNCTIONS-----------------------------------------------------------*/
 
@@ -76,10 +64,13 @@ void initSerial(){
 
 void checkSerial(){
 	
+	/* If ESP8266 sent something to Arduino */
 	if(ESP8266Serial.available()>0){
 		
+		/* Read it */
 		ESP8266Serial.readBytes((uint8_t *) &msg, (uint16_t) sizeof(msg));
 		
+		/* And parse it */
 		parseInput();
 	}
 	
@@ -87,33 +78,61 @@ void checkSerial(){
 
 void sendMessage(uint32_t id, String text){
 	
+	/* To store the outgoing message */
 	simpleTBMessage sendingSmsg;
 	
+	/* Fill the id */
 	sendingSmsg.id = id;
+	
+	/* Initialize text */
+	//for(int i=0;i<MESSAGE_TEXT_LENGTH;i++) sendingSmsg.text[i] = '\0';
+	
+	/* Fill the text */
 	text.toCharArray(sendingSmsg.text,MESSAGE_TEXT_LENGTH);
 	
+	/* Debug code */
+	#ifdef DEBUG
+		Serial.print(F("sendMessage("));
+		Serial.print(sendingSmsg.id);
+		Serial.print(F(","));
+		Serial.print(sendingSmsg.text);
+		Serial.println(F(")"));
+	#endif
+	
+	/* Send struct to ESP8266 */
 	ESP8266Serial.write((uint8_t *) &sendingSmsg, (uint16_t) sizeof(sendingSmsg));
 	
+	/* Wait for reception */
 	delay(1000);
 	
 }
 
+/* Send message to all users with notifications enabled */
 void sendMessageToAllUsers(String text){
 	
 	for(int i=0;i<MAX_USERS;i++){
-		if(users[i].id != 0xFFFFFFFF){
-			Serial.print("Message sent to: ");
-			Serial.print(users[i].id);
-			Serial.print(" text: \"");
-			Serial.print(text);
-			Serial.println("\"");
+		
+		/* If user exists and has notifications enabled */
+		if(users[i].id != 0xFFFFFFFF && (users[i].notificationsEnabled & 0x01)){
+			
+			/* Debug code */
+			#ifdef DEBUG
+				Serial.print(F("Message sent to: "));
+				Serial.print(users[i].id);
+				Serial.print(F(" text: \""));
+				Serial.print(text);
+				Serial.println(F("\""));
+			#endif
+			
+			/* Send message */
 			sendMessage(users[i].id,text);
+			
+			/* Not sure about that */
 			delay(4000);
 		}
 	}
 
 }
-
 
 /* Empties the serial input buffer */
 void serialFlush(){
