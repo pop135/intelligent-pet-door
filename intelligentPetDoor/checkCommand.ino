@@ -34,63 +34,20 @@
 
 /*----------INCLUDES-------------------------------------------------------------*/
 
-/*----------DEFINES--------------------------------------------------------------*/
-
-/*----------TYPEDEFS------------------------------------------------------------*/
-
-// /* Data type to store a command. */
-// typedef struct commandIssued {
-	
-	// /* 0 = /now
-	 // * 1 = /program
-	 // * 2 = /where
-	 // */
-	// int commandName;
-	
-	// int day;
-	// int hour;
-	// int minute;
-	
-	// /* 0 = open
-	 // * 1 = in
-	 // * 2 = out
-	 // * 3 = close 
-	 // */
-	// int movement; 
-	
-	// /* 0 = schedule command
- 	 // * 1 = delete scheduled command
- 	 // * 2 = show scheduled commands
-	 // * 3 = delete all scheduled commands 
-	 // */
-	// int modifierFlag;
-	
-// } commandIssued; 
-
-/*----------PROTOTIPES----------------------------------------------------------*/
-
-int scheduledCommandSearch(commandIssued c);
-void swapCommands(commandIssued *commandA, commandIssued *commandB);
-
-/*----------VARIABLES-----------------------------------------------------------*/
+/*----------VARIABLES------------------------------------------------------------*/
 
 /* Variable to store the command it is filled by serialEvent interrupt */
 commandIssued command;
+
+/*----------EXTERN---------------------------------------------------------------*/
 
 /* Extern variables used here */
 extern SoftwareSerial ESP8266Serial;
 extern simpleTBMessage msg;
 extern int nschedule;
+extern uint8_t npets;
 
-extern void open();
-extern void in();
-extern void out();
-extern void close();
-uint8_t readEEPROM(int p);
-void writeEEPROM(int p, uint8_t d);
-extern void sendMessage(uint32_t id, String text);
-
-/*----------FUNCTIONS-----------------------------------------------------------*/
+/*----------FUNCTIONS------------------------------------------------------------*/
 
 /* Init function */
 void initCheckCommand(){
@@ -242,19 +199,18 @@ void program(){
 			
 			/* Debug code */
 			#ifdef DEBUG
-				Serial.println(F("Max schedules per day reached."));
+				Serial.println(F("Max schedules per day reached"));
 			#endif
 			
 			/* Inform the user */
-			sendMessage(msg.id,F("Max schedules per day reached. "));
+			sendMessage(msg.id,F("Max schedules per day reached"));
 			
 		}
-		
 		else{
 			
 			/* Debug code */
 			#ifdef DEBUG
-				Serial.println(F("You already have a scheduled command at that time. Delete it before."));
+				Serial.println(F("Time slot full."));
 			#endif
 			
 			/* Inform the user */
@@ -319,10 +275,6 @@ void program(){
 				Serial.println(nschedule);
 			#endif
 			
-			/////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			//Buscar alguna manera de reduir el tamany d'aquesta taula
-			/////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			
 			/* List to store scheduled commands */
 			struct EEPROMStoredCommand sortedScheduledCommands[MAX_SCHEDULE];
 			int nReadCommands=0;
@@ -337,6 +289,7 @@ void program(){
 					sortedScheduledCommands[nReadCommands].minute = schedule1&0x3F;
 					sortedScheduledCommands[nReadCommands].movement = schedule1>>6;
 					
+					/* Debug code */
 					#ifdef DEBUG
 						Serial.print(F("# read commands:"));
 						Serial.print(nReadCommands);
@@ -350,8 +303,10 @@ void program(){
 						Serial.println(sortedScheduledCommands[nReadCommands].movement);
 					#endif
 					
+					/* Increment readed commands */
 					nReadCommands++;
 					
+					/* Nothing else to read */
 					if(nschedule == nReadCommands) break;
 					
 				}
@@ -365,58 +320,18 @@ void program(){
 				for (int j = 0; j < nReadCommands-i-1; j++) {
 					/* If day pos j greater than day pos j+1 swap */
 					if (sortedScheduledCommands[j].day > sortedScheduledCommands[j+1].day) {
-						// auxCommand.day = sortedScheduledCommands[j].day;
-						// auxCommand.hour = sortedScheduledCommands[j].hour;
-						// auxCommand.minute = sortedScheduledCommands[j].minute;
-						// auxCommand.movement = sortedScheduledCommands[j].movement;
-						// sortedScheduledCommands[j].day = sortedScheduledCommands[j+1].day;
-						// sortedScheduledCommands[j].hour = sortedScheduledCommands[j+1].hour;
-						// sortedScheduledCommands[j].minute = sortedScheduledCommands[j+1].minute;
-						// sortedScheduledCommands[j].movement = sortedScheduledCommands[j+1].movement;
-						// sortedScheduledCommands[j+1].day = auxCommand.day;
-						// sortedScheduledCommands[j+1].hour = auxCommand.hour;
-						// sortedScheduledCommands[j+1].minute = auxCommand.minute;
-						// sortedScheduledCommands[j+1].movement = auxCommand.movement;
-						
 						swapCommands(&sortedScheduledCommands[j], &sortedScheduledCommands[j+1]); 
 						swapped = true; 
 					} 
 					else if (sortedScheduledCommands[j].day == sortedScheduledCommands[j+1].day){
 						/* In case of equal days check hour */
 						if (sortedScheduledCommands[j].hour > sortedScheduledCommands[j+1].hour) {
-							// auxCommand.day = sortedScheduledCommands[j].day;
-							// auxCommand.hour = sortedScheduledCommands[j].hour;
-							// auxCommand.minute = sortedScheduledCommands[j].minute;
-							// auxCommand.movement = sortedScheduledCommands[j].movement;
-							// sortedScheduledCommands[j].day = sortedScheduledCommands[j+1].day;
-							// sortedScheduledCommands[j].hour = sortedScheduledCommands[j+1].hour;
-							// sortedScheduledCommands[j].minute = sortedScheduledCommands[j+1].minute;
-							// sortedScheduledCommands[j].movement = sortedScheduledCommands[j+1].movement;
-							// sortedScheduledCommands[j+1].day = auxCommand.day;
-							// sortedScheduledCommands[j+1].hour = auxCommand.hour;
-							// sortedScheduledCommands[j+1].minute = auxCommand.minute;
-							// sortedScheduledCommands[j+1].movement = auxCommand.movement;
-							
 							swapCommands(&sortedScheduledCommands[j], &sortedScheduledCommands[j+1]); 
 							swapped = true; 
 						} 
 						else if (sortedScheduledCommands[j].hour == sortedScheduledCommands[j+1].hour) {
 							/* In case of equal days and hours check minute */
 							if (sortedScheduledCommands[j].minute > sortedScheduledCommands[j+1].minute) {
-								
-								// auxCommand.day = sortedScheduledCommands[j].day;
-								// auxCommand.hour = sortedScheduledCommands[j].hour;
-								// auxCommand.minute = sortedScheduledCommands[j].minute;
-								// auxCommand.movement = sortedScheduledCommands[j].movement;
-								// sortedScheduledCommands[j].day = sortedScheduledCommands[j+1].day;
-								// sortedScheduledCommands[j].hour = sortedScheduledCommands[j+1].hour;
-								// sortedScheduledCommands[j].minute = sortedScheduledCommands[j+1].minute;
-								// sortedScheduledCommands[j].movement = sortedScheduledCommands[j+1].movement;
-								// sortedScheduledCommands[j+1].day = auxCommand.day;
-								// sortedScheduledCommands[j+1].hour = auxCommand.hour;
-								// sortedScheduledCommands[j+1].minute = auxCommand.minute;
-								// sortedScheduledCommands[j+1].movement = auxCommand.movement;
-								
 								swapCommands(&sortedScheduledCommands[j], &sortedScheduledCommands[j+1]); 
 								swapped = true; 
 									
@@ -460,6 +375,7 @@ void program(){
 			
 			for(int i=1;i<8;i++){
 				scheduledCommandsFound = 0;
+				/* First part of message (day) */
 				if(i==1) aux = F("Monday\n");
 				else if (i == 2) aux = F("Tuesday\n");
 				else if (i == 3) aux = F("Wednesday\n");
@@ -468,6 +384,7 @@ void program(){
 				else if (i == 6) aux = F("Saturday\n");
 				else if (i == 7) aux = F("Sunday\n");
 				
+				/* Second part of message (scheduled commands) */
 				for (int j = 0; j<nReadCommands;j++){
 					if(sortedScheduledCommands[j].day == i){
 						scheduledCommandsFound = 1;
@@ -482,14 +399,17 @@ void program(){
 						else if(sortedScheduledCommands[j].movement == 3) aux = aux + F(" close\n");
 					}
 				}
+				
+				/* Send one message per day */
 				if(scheduledCommandsFound) {
 					
 					#ifdef DEBUG
 						Serial.println(aux);
-						
 					#endif	
 					
+					/* Send message */
 					sendMessage(msg.id,aux);
+					delay(3000);
 					
 				}
 			}	
@@ -503,7 +423,7 @@ void program(){
 			#endif
 			
 			/* Inform the user */
-			sendMessage(msg.id,F("No commands scheduled atm."));
+			sendMessage(msg.id,F("No commands scheduled atm"));
 		}
 	}
 	
@@ -527,7 +447,7 @@ void program(){
 			}
 			
 			/* Inform the user */
-			sendMessage(msg.id,F("All scheduled commands deleted!🙀"));
+			sendMessage(msg.id,F("All scheduled commands deleted!"));
 		}
 		else{
 			/* Debug code */
@@ -536,7 +456,7 @@ void program(){
 			#endif
 			
 			/* Inform the user */
-			 sendMessage(msg.id,F("No commands scheduled atm."));
+			 sendMessage(msg.id,F("No commands scheduled atm"));
 		}
 	}
 }
@@ -557,7 +477,7 @@ void where(){
 		#endif
 		
 		/* Inform the user */
-		sendMessage(msg.id,F("We are all inside home.😻"));
+		sendMessage(msg.id,F("We are all inside home! 😻"));
 		
 	}
 	else if (npetsOut == npets) {
@@ -568,10 +488,10 @@ void where(){
 		#endif
 		
 		/* Inform the user */
-		sendMessage(msg.id,F("We are all outside!😼"));
+		sendMessage(msg.id,F("We are all outside! 😼"));
 	}
 	else{
-		
+					
 		/* Debug code */
 		#ifdef DEBUG 
 			Serial.print(F("There are "));
@@ -585,8 +505,24 @@ void where(){
 			Serial.println(F(" outside."));
 		#endif
 		
-		/* Inform the user */
-		sendMessage(msg.id,(String)npetsIn + F(" of us are at home and ") + npetsOut + F(" are roaming outside"));
+		/* If to deal with is/are verb tenses */
+		if (npets == 2){
+			/* Inform the user */
+			sendMessage(msg.id,(String)F("1 of us is at home and 1 is roaming outside"));
+		}
+		else if (npetsIn == 1){
+			/* Inform the user */
+			sendMessage(msg.id,(String)F("1 of us is at home and ") + npetsOut + F(" are roaming outside"));
+		}
+		else if (npetsOut == 1){
+			/* Inform the user */
+			sendMessage(msg.id,(String) npetsIn + F(" of us are at home and 1 is roaming outside"));
+		}
+		else{
+			/* Inform the user */
+			sendMessage(msg.id,(String)npetsIn + F(" of us are at home and ") + npetsOut + F(" are roaming outside"));
+		}
+		
 		
 	}
 
@@ -617,6 +553,8 @@ int scheduledCommandSearch(commandIssued c){
 			
 			/* If scheduled command found return the EEPROM position where it is */
 			if((day == c.day) && (hour == c.hour) && (minute == c.minute)){
+				
+				/* Return position of scheduled command */
 				return i;
 			}
 			else{
@@ -650,32 +588,9 @@ void clearCommand(){
 
 /* Implement swap function for bubble sort the list */
 void swapCommands(EEPROMStoredCommand *commandA, EEPROMStoredCommand *commandB) { 
-	// EEPROMStoredCommand temp;
-	// temp.day = commandA->day;
-	// temp.hour = commandA->hour;
-	// temp.minute = commandA->minute;
-	// temp.movement = commandA->movement;
-	
-	// commandA->day = commandB->day;
-	// commandA->hour = commandB->hour;
-	// commandA->minute = commandB->minute;
-	// commandA->movement = commandB->movement;
-	
-	// commandB->day = commandA->day;
-	// commandB->hour = commandA->hour;
-	// commandB->minute = commandA->minute;
-	// commandB->movement = commandA->movement;
 	EEPROMStoredCommand temp = *commandA; 
 	*commandA = *commandB; 
 	*commandB = temp; 
 }
-
-
-
-
-
-
-
-
 
 /*----------INTERRUPTS----------------------------------------------------------*/

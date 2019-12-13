@@ -34,7 +34,7 @@
 
 /*----------INCLUDES-------------------------------------------------------------*/
 
-/*----------VARIABLES-----------------------------------------------------------*/
+/*----------EXTERN---------------------------------------------------------------*/
 
 extern uint8_t nUsers;
 extern uint8_t npets;
@@ -93,17 +93,21 @@ void parseInput(){
 		
 	/* First you have to be a registered user */	
 	if(!validUser(msg.id)){
+		
+		/* If there are room for you */
 		if(nUsers < MAX_USERS){
+			
+			/* Type /start to register into the bot */
 			if((words[0].equals(F("/start"))) && (words[1].equals(F("")))){
 				saveUser(msg.id);
 				sendMessage(msg.id,F("Now you are a user!"));
 			}
 			else{
-				sendMessage(msg.id,F("You are not a valid user. Try /start"));
+				sendMessage(msg.id,F("You are not a valid user, try /start"));
 			}
 		}
 		else{
-			sendMessage(msg.id,F("Max users reached"));
+			sendMessage(msg.id,F("Max users reached!"));
 		}
 	}
 	
@@ -117,22 +121,22 @@ void parseInput(){
 						definePetsNumber(npetsAux);
 					}
 					else{
-						sendMessage(msg.id,F("No defined pets. Try /pet number {your number of pets}"));
+						sendMessage(msg.id,F("No defined pets, try /help pet"));
 						return;
 					}
 				}
 				else{
-					sendMessage(msg.id,F("No defined pets. Try /pet number {your number of pets}"));
+					sendMessage(msg.id,F("No defined pets, try /help pet"));
 					return;
 				}
 			}
 			else{
-				sendMessage(msg.id,F("No defined pets. Try /pet number {your number of pets}"));
+				sendMessage(msg.id,F("No defined pets, try /help pet"));
 				return;
 			}
 		}
 		else{
-			sendMessage(msg.id,F("No defined pets. Try /pet number {your number of pets}"));
+			sendMessage(msg.id,F("No defined pets, try /help pet"));
 			return;
 		}
 	}
@@ -145,7 +149,7 @@ void parseInput(){
 			if(words[1].equals(F("del"))){
 				if(words[2].equals(F(""))){
 					delUser(msg.id);
-					sendMessage(msg.id,F("You are no longer a valid user."));
+					sendMessage(msg.id,F("You are no longer a valid user"));
 				}
 				else{
 					getUser(msg.id)->errorcount++;
@@ -153,11 +157,28 @@ void parseInput(){
 					return;
 				}
 			}
-			else if((words[1].equals(F("tnotifications"))) || (words[1].equals(F("tn")))){
-				if(words[2].equals(F(""))){
-					uint8_t newNotificationsValue = toggleNotifications(msg.id);
-					if(newNotificationsValue & 0x01) sendMessage(msg.id,F("Notifications enabled 💪"));
-					else sendMessage(msg.id,F("Notifications disabled 👎"));
+			else if((words[1].equals(F("notifications"))) || (words[1].equals(F("noti"))) || (words[1].equals(F("n")))){
+				if(words[2].equals(F("on"))){
+					if(words[3].equals(F(""))){
+						setNotifications(msg.id,1);
+						sendMessage(msg.id,F("Notifications enabled 💪"));
+					}
+					else{
+						getUser(msg.id)->errorcount++;
+						errorHandler(msg.id,getUser(msg.id)->errorcount);
+						return;
+					}
+				}
+				else if(words[2].equals(F("off"))){
+						if(words[3].equals(F(""))){
+						setNotifications(msg.id,0);
+						sendMessage(msg.id,F("Notifications disabled 👎"));
+					}
+					else{
+						getUser(msg.id)->errorcount++;
+						errorHandler(msg.id,getUser(msg.id)->errorcount);
+						return;
+					}
 				}
 				else{
 					getUser(msg.id)->errorcount++;
@@ -202,10 +223,10 @@ void parseInput(){
 				
 				if(words[2].equals(F(""))){
 					#ifdef DEBUG
-						Serial.println((String) F("You have ") + npets + F("pets defined."));
+						Serial.println((String) F("You have ") + npets + F(" pets defined"));
 					#endif
 					
-					sendMessage(msg.id,(String) F("You have ") + npets + F("pets defined."));
+					sendMessage(msg.id,(String) F("You have ") + npets + F(" pets defined"));
 				}
 				else{
 					getUser(msg.id)->errorcount++;
@@ -586,7 +607,7 @@ void parseInput(){
 						#endif
 						
 						if(action.npetsIn == npets) {
-							if(action.movement == 0) sendMessage(msg.id,F("When all pets are inside I will OPEN the door"));
+							if(action.movement == 0) sendMessage(msg.id,F("When all pets w inside I will OPEN the door"));
 							else if(action.movement == 1) sendMessage(msg.id,F("When all pets are inside I will set the door at IN position"));
 							else if(action.movement == 2) sendMessage(msg.id,F("When all pets are inside I will set the door at OUT position"));
 							else if(action.movement == 3) sendMessage(msg.id,F("When all pets are inside I will CLOSE the door"));
@@ -627,7 +648,7 @@ void parseInput(){
 						
 						clearNextAction();
 						getUser(msg.id)->errorcount = 0;
-						sendMessage(msg.id,F("/when command deleted!"));
+						sendMessage(msg.id,F("Action deleted!"));
 					}
 					else{
 						getUser(msg.id)->errorcount =0;
@@ -684,6 +705,14 @@ void parseInput(){
 				showHelp(msg.id,5);
 				getUser(msg.id)->errorcount = 0;
 			}
+			else if(words[1].equals(F("user")) && words[2].equals("")){
+				showHelp(msg.id,6);
+				getUser(msg.id)->errorcount = 0;
+			}
+			else if(words[1].equals(F("pet")) && words[2].equals("")){
+				showHelp(msg.id,7);
+				getUser(msg.id)->errorcount = 0;
+			}
 			else{
 				getUser(msg.id)->errorcount++;
 				errorHandler(msg.id,getUser(msg.id)->errorcount);  
@@ -704,33 +733,39 @@ void errorHandler(uint32_t id, int e){
 	if(e == 1) sendMessage(id,F("Oops! You misspelled something...😹"));
 	else if(e == 2) sendMessage(id,F("Again...🙀"));
 	else if(e == 3) sendMessage(id,F("Really???😿 Chek /help pls..."));
-	else if(e >= 4) sendMessage(id,F("Check /help and stop bothering me...😾"));
-	else if(e == -1) sendMessage(id,F("There is already a \"/when\" next action issued. Use \"/when show\" or \"/when del\" before."));
+	else if(e >= 4) sendMessage(id,F("You should check /help 😾"));
+	else if(e == -1) sendMessage(id,F("There is already a next action issued"));
 	else if(e == -2) sendMessage(id,F("Do you know how many pets live with you?"));
-	else if(e == -3) sendMessage(id,F("Nothing to delete. There is not a \"/when\" next action issued."));
-	else if(e == -4) sendMessage(id,F("Nothing to show. There is not a \"/when\" next action issued."));
+	else if(e == -3) sendMessage(id,F("Nothing to delete"));
+	else if(e == -4) sendMessage(id,F("Nothing to show"));
 	
 	
 }
 
 void showHelp(uint32_t id, int commands){
 	if(commands == 0){
-		sendMessage(id,F("Intelligent pet door help:\n\n/help usual - Usual commands help.\n/help prog - /prog help\n/help when - /when help\n/help actions - Available actions\n/help dow - Days of the week"));
+		sendMessage(id,F("Intelligent pet door help, try one of these:\n\n/help usual\n/help prog\n/help when\n/help user\n/help pet\n/help actions\n/help dow"));
 	}
 	else if(commands == 1){
 		sendMessage(id,F("Usual commands:\n\n/open - Opens the door\n/in - Allows pets go in but not go out\n/out - Allows pets go out but not go in\n/close - Closes the door\n/where - Shows where are the pets"));
 	}
 	else if(commands == 2){
-		sendMessage(id,F("Program commands:\n\n/prog {DoW} HH:MM {action} - Save command\n/prog del {DoW} HH:MM - Delete command\n/prog del all - Delete all commands\n/prog show - Show commands"));
+		sendMessage(id,F("Program commands:\n\n/prog {DoW} HH:MM {action} - Saves command\n/prog del {DoW} HH:MM - Deletes command\n/prog del all - Deletes all commands\n/prog show - Shows all commands"));
 	}
 	else if(commands == 3){
-		sendMessage(id,F("When commands:\n\n/when {allin | allout | X in Y out} {action} - When conditons met do the action\n/when show - Shows the next action\n/when del - Deletes the next action"));
+		sendMessage(id,F("When commands:\n\n/when {allin | allout | X in Y out} {action} - When conditons met does the action\n/when show - Shows the next action\n/when del - Deletes the next action"));
 	}
 	else if(commands == 4){
 		sendMessage(id,F("Available actions:\n\nopen - pets have free movment\nin - pets can go in but not go out.\nout - pets can go out but not go in\nclose - the door is closed"));
 	}
 	else if(commands == 5){
 		sendMessage(id,F("Days of week:\n\n1 - Monday\n2 - Tuesday\n3 - Wednesday\n4 - Thursday\n5 - Friday\n6 - Saturday\n7 - Sunday"));
+	}
+	else if(commands == 6){
+		sendMessage(id,F("User commands:\n\n/user notifications {on|off} - Enables/Disables notifications\n/user del - Deletes user"));
+	}
+	else if(commands == 7){
+		sendMessage(id,F("Pet commands:\n\n/pet number {number of pets} - Sets up number of pets\n/pet show - Shows number of pets"));
 	}
 }
 

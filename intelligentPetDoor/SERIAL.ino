@@ -54,10 +54,12 @@ extern User users[MAX_USERS];
 
 void initSerial(){
 	
+	/* If debug flag set initialize serial */
 	#ifdef DEBUG
 		Serial.begin(9600);
 	#endif
 
+	/* Initialize comunication with ESP8266 */
 	ESP8266Serial.begin(9600);
 	
 }
@@ -127,7 +129,7 @@ void sendMessageToAllUsers(String text){
 			/* Send message */
 			sendMessage(users[i].id,text);
 			
-			/* Not sure about that */
+			/* Give enougth time to ESP8266 to send messages */
 			delay(4000);
 		}
 	}

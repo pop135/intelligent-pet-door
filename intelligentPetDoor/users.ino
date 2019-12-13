@@ -36,7 +36,10 @@
 
 /*----------VARIABLES-----------------------------------------------------------*/
 
+/* Number of users */
 uint8_t nUsers;
+
+/* Initially filled with user info to avoid too much EEPROM reads */
 User users[MAX_USERS];
 
 /*----------FUNCTIONS-----------------------------------------------------------*/
@@ -142,7 +145,7 @@ void delUser(uint32_t id){
 		/* Get possible user */
 		userAux.id = readEEPROM(i+3) | (uint32_t)readEEPROM(i+2) << 8 | (uint32_t)readEEPROM(i+1) << 16 | (uint32_t)readEEPROM(i) << 24;
 		
-		/* Stores user info in the EEPROM and users array */
+		/* Delete user info in the EEPROM and users array */
 		if(userAux.id == id){
 			
 			/* Debug code */
@@ -161,13 +164,16 @@ void delUser(uint32_t id){
 			
 			/* Decrement number of users */
 			nUsers--;
+			
+			/* Job done, bye */
+			return;
 		}
 
 	}
 	
 }
 
-uint8_t toggleNotifications(uint32_t id){
+uint8_t setNotifications(uint32_t id, uint8_t n){
 	
 	/* Auxiliar variable to store temporary information */
 	User userAux;
@@ -178,50 +184,59 @@ uint8_t toggleNotifications(uint32_t id){
 		/* Get possible user */
 		userAux.id = readEEPROM(i+3) | (uint32_t)readEEPROM(i+2) << 8 | (uint32_t)readEEPROM(i+1) << 16 | (uint32_t)readEEPROM(i) << 24;
 		
-		/* Stores user info in the EEPROM and users array */
+		/* User found */
 		if(userAux.id == id){
 			
 			/* Get actual state of notifications */
-			userAux.notificationsEnabled = readEEPROM(i+4);
+			userAux.notificationsEnabled = (readEEPROM(i+4) & 0x01);
 			
-			/* We dont care the value, just toggle notificationsEnabled value stored in EEPROM */
-			writeEEPROM(i+4,(userAux.notificationsEnabled^0x01));
-			
-			/* Debug code */
-			#ifdef DEBUG
-				Serial.println((String)F("User: ")+ id + F(" EEPROM notifications was ") + userAux.notificationsEnabled + F(" and now are ")+ (userAux.notificationsEnabled^0x01));
-			#endif
-			
-			/* Search for the user in the array */
-			for(int i=0;i<nUsers;i++){
+			/* We dont care the value, just toggle notificationsEnabled value if different */
+			if(userAux.notificationsEnabled != n){
 				
-				/* Once found also toggle the value */
-				if(users[i].id == userAux.id){
+				/* Change value in EEPROM */
+				writeEEPROM(i+4,(userAux.notificationsEnabled^0x01));
+			
+				/* Debug code */
+				#ifdef DEBUG
+					Serial.println((String)F("User: ")+ id + F(" EEPROM notifications was ") + userAux.notificationsEnabled + F(" and now are ")+ (userAux.notificationsEnabled^0x01));
+				#endif
+				
+				/* Search for the user in the array */
+				for(int i=0;i<nUsers;i++){
 					
-					/* Debug code */
-					#ifdef DEBUG
-						Serial.print((String)F("User: ")+ id + F(" USERS_ARRAY notifications was ") + users[i].notificationsEnabled);
-					#endif
-					
-					/* XOR value to toggle it */
-					users[i].notificationsEnabled = users[i].notificationsEnabled^0x01;
-					
-					/* Debug code */
-					#ifdef DEBUG
-						Serial.println((String) F(" and now are ")+ users[i].notificationsEnabled);
-					#endif
-					
-					/* Return new value for notifications enabled */
-					return users[i].notificationsEnabled;
+					/* Once found also toggle the value */
+					if(users[i].id == userAux.id){
+						
+						/* Debug code */
+						#ifdef DEBUG
+							Serial.print((String)F("User: ")+ id + F(" USERS_ARRAY notifications was ") + users[i].notificationsEnabled);
+						#endif
+						
+						/* XOR value to toggle it */
+						users[i].notificationsEnabled = users[i].notificationsEnabled^0x01;
+						
+						/* Debug code */
+						#ifdef DEBUG
+							Serial.println((String) F(" and now are ")+ users[i].notificationsEnabled);
+						#endif
+						
+					}
 				}
+				
 			}
 
+			/* User found and notifications set to new value, job done */
+			return 1;
 		}
 
 	}
 	
+	/* User not found */
+	return 0;
+	
 }
 
+/* Returns all info from the given id user */
 struct User* getUser(uint32_t id){
 	for(int i=0;i<nUsers;i++){
 		if(users[i].id == id){
@@ -230,9 +245,9 @@ struct User* getUser(uint32_t id){
 	}
 }
 
-
+/* Checks if id is a valid user */
 uint8_t validUser(uint32_t u){
-	for(int i =0;i<nUsers;i++){
+	for(int i = 0;i<nUsers;i++){
 		if(users[i].id == u) return 1;
 	}
 	return 0;

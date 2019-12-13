@@ -34,20 +34,19 @@
 
 /*----------INCLUDES-------------------------------------------------------------*/
 
-/*----------DEFINES--------------------------------------------------------------*/
-
-/*----------TYPEDEFS------------------------------------------------------------*/
-
 /*----------VARIABLES-----------------------------------------------------------*/
 
+/* Store the number of pets */
 uint8_t npets; 
 
 /*----------FUNCTIONS-----------------------------------------------------------*/
 
+/* Initializes npets variable from EEPROM */
 void initPets(){
 	
 	npets = readEEPROM(NUMBER_OF_PETS_POS);
 		
+	/* Debug code*/
 	#ifdef DEBUG
 		Serial.print(F("Number of pets defined: "));
 		if(npets == 0xFF)	Serial.println(F("No pets defined"));
@@ -56,18 +55,36 @@ void initPets(){
 	
 }
 
+/* Redefine number of pets */
 void definePetsNumber(uint8_t n){
 	
+	/* Update number of pets value */
 	npets = n;
 	writeEEPROM(NUMBER_OF_PETS_POS,n);
+	
+	/* Reset position of pets */
 	npetsIn = n;
 	npetsOut = 0;
+	
+	/* Clear next action to avoid bad behaviour */
 	clearNextAction();
 			
 }
 
-
-
-
+/* Reset number of pets */
+void resetPetsNumber(void){
+	
+	/* Reset number of pets value */
+	npets = 0xFF;
+	writeEEPROM(NUMBER_OF_PETS_POS,0xFF);
+	
+	/* Reset position of pets */
+	npetsIn = 0xFF;
+	npetsOut = 0;
+	
+	/* Clear next action to avoid bad behaviour */
+	clearNextAction();
+	
+}
 
 /*----------INTERRUPTS----------------------------------------------------------*/

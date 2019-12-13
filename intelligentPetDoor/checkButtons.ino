@@ -54,15 +54,16 @@ char debounceFlag;
 int npetsIn;
 int npetsOut;
 
-/* Externally declared sensor ISR flags */
-extern volatile char inOutFlag;
-extern volatile char outInFlag;
-extern uint8_t npets;
-
 /* Debug code */
 #ifdef DEBUG
 	int isrCount;
 #endif
+
+/*----------EXTERN--------------------------------------------------------------*/
+
+extern volatile char inOutFlag;
+extern volatile char outInFlag;
+extern uint8_t npets;
 
 /*----------FUNCTIONS-----------------------------------------------------------*/
 
@@ -71,7 +72,7 @@ void initCheckButtons(){
 
 	/* Sets door event start and end timers to initial value */
 	doorEventStart=0;
-	doorEventEnd=0;
+	doorEventEnd=millis();
 
 	/* No door event going on */
 	debounceFlag=0;

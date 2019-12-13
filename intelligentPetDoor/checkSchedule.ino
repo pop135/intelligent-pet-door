@@ -61,7 +61,7 @@ void initSchedule(){
 	
 	/* Read the EEPROM looking for previous scheduled stored commands */
 	for(int i=SCHEDULE_POS;i<(MAX_SCHEDULE*SCHEDULE_SIZE);i=i+SCHEDULE_SIZE){
-		if((EEPROM.read(i)&0x3F) != 0x3F){
+		if((readEEPROM(i)&0x3F) != 0x3F){
 			nschedule++;
 		}
 	}
@@ -122,11 +122,11 @@ void checkSchedule(){
 		for(int i=SCHEDULE_POS;i<(MAX_SCHEDULE*SCHEDULE_SIZE);i=i+SCHEDULE_SIZE){
 			
 			/* If found a shceduled command */
-			schedule1 = EEPROM.read(i);
+			schedule1 = readEEPROM(i);
 			if((schedule1&0x3F) != 0x3F){
 				
 				/* Extract all information from the scheduled command that has found */
-				schedule2 = EEPROM.read(i+1);
+				schedule2 = readEEPROM(i+1);
 				scheduledDayOfWeek = schedule2&0x07;
 				scheduledHour = schedule2>>3;
 				scheduledMinute = schedule1&0x3F;

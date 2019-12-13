@@ -43,6 +43,7 @@
 
 /* EEPROM read */
 uint8_t readEEPROM(int p){
+	
 	uint8_t byteRead;
 	
 	byteRead = EEPROM.read(p);
@@ -50,7 +51,6 @@ uint8_t readEEPROM(int p){
 	delay(20);
 	
 	return byteRead;
-	
 	
 }
 

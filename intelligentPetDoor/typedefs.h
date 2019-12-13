@@ -43,8 +43,20 @@ typedef struct commandIssued {
 	 */
 	uint8_t commandName;
 	
+	/* 1 = monday
+	 * 2 = tuesday
+	 * 3 = wednesday
+	 * 4 = thursday
+	 * 5 = friday
+	 * 6 = saturday
+	 * 7 = sunday
+	 */
 	uint8_t day;
+	
+	/* 0 to 23*/
 	uint8_t hour;
+	
+	/* 0 to 59 */
 	uint8_t minute;
 	
 	/* 0 = open
@@ -63,7 +75,10 @@ typedef struct commandIssued {
 	
 } commandIssued; 
 
+/* Data type to store a command readed from EEPROM */
 typedef struct EEPROMStoredCommand {
+	
+	/* Same values that commandIssued */
 	uint8_t day;
 	uint8_t hour;
 	uint8_t minute;
@@ -78,23 +93,37 @@ typedef struct nextAction {
 	 * 1 = in
 	 * 2 = out
 	 * 3 = close 
+	 * 0xFF = no action 
 	 */
 	uint8_t movement;
 	
+	/* Number of pets inside and outside to consider conditions met */
 	uint8_t npetsIn;
 	uint8_t npetsOut;
 	
 } nextAction;
 
-/* To store messages sent to ESP8266 */
+/* Data type to store messages sent to ESP8266 */
 typedef struct simpleTBMessage {
+	
+	/* Telegram user id */
 	uint32_t id;
+	
+	/* Telegram message */
 	char text[MESSAGE_TEXT_LENGTH];
+	
 } simpleTBMessage;
 
-/* To store user related info */
+/* Data type to store user related info */
 typedef struct User {
+	
+	/* User id (same as telegram id) */
 	uint32_t id;
+	
+	/* User errorcount */
 	uint8_t errorcount;
+	
+	/* Notifications flag */
 	uint8_t notificationsEnabled;
+	
 } User;

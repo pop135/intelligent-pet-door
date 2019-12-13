@@ -39,7 +39,8 @@
 /* Stores the next action if any */
 nextAction action;
 
-/* Externally declared variables used on this file */
+/*----------EXTERN--------------------------------------------------------------*/
+
 extern unsigned long doorEventEnd;
 extern int npetsIn;
 extern int npetsOut;
@@ -58,7 +59,7 @@ void initCheckNextAction(){
 void checkNextAction(){
 	
 	/* If next action issued  */
-	if((action.movement != -1) && 
+	if((action.movement != 0xFF) && 
 		
 		/* Number of pets inside and outside is correct */
 		(action.npetsIn == npetsIn) && (action.npetsOut == npetsOut) && 
@@ -71,68 +72,85 @@ void checkNextAction(){
 		
 		#ifdef DEBUG
 			Serial.print(F("CHECK NEXT ACTION doorEventEnd="));
-			Serial.print(doorEventEnd,DEC);
+			Serial.println(doorEventEnd,DEC);
 		#endif
 		
-		/* Open movement */
+		/* Auxiliar variable */
+		String aux;
+		
+		/* All pets inside */
+		if(action.npetsIn == npets) aux = F("All your pets are inside now. ");
+		
+		/* All pets outside */
+		else if (action.npetsOut == npets) aux = F("All your pets are outside now. ");
+		
+		/* Some pets inside and some outside */
+		else{
+			/* If to deal with is/are verb tenses */
+			if (npets == 2) aux = F("1 of your pets is inside and 1 is outside. ");
+			else if (action.npetsIn == 1) aux = (String) F("1 of your pets is inside and ") + action.npetsOut + F(" are outside. ");
+			else if (action.npetsOut == 1) aux = (String) action.npetsIn + F(" of your pets are inside and 1 is outside. ");
+			else aux = (String) action.npetsIn + F(" of your pets are inside and ") + action.npetsOut + F(" are outside. ");
+		}
+	
+		/* Complete string with action and actually do the action*/
 		if(action.movement == 0){
 			
 			/* Debug code */
 			#ifdef DEBUG
-				Serial.print(F("Conditions met. Programmed action open done"));
+				Serial.println(F("Conditions met. Programmed action open done"));
 			#endif
 			
 			/* Actually do the action */
 			open();
 			
-			/* Inform user */
-			sendMessageToAllUsers(F("/when Conditions met. Door opened!"));
+			/* complete string */
+			aux = aux + F("Condifions met, door was opened!");
 		
 		}
-		/* In movement */
 		else if(action.movement == 1){
 			
 			/* Debug code */
 			#ifdef DEBUG
-				Serial.print(F("Conditions met. Programmed action in done."));
+				Serial.println(F("Conditions met. Programmed action in done."));
 			#endif
 			
 			/* Actually do the action */
 			in();
 			
-			/* Inform user */
-			sendMessageToAllUsers(F("/when Conditions met. Pets can just come in now!"));
+			/* complete string */
+			aux = aux + F("Condifions met, door was set at in position!");
 		
 		}
-		/* Out movement */
 		else if(action.movement == 2){
 			
 			/* Debug code */
 			#ifdef DEBUG
-				Serial.print(F("Conditions met. Programmed action out done."));
+				Serial.println(F("Conditions met. Programmed action out done."));
 			#endif
 			
 			/* Actually do the action */
 			out();
 			
-			/* Inform user */
-			sendMessageToAllUsers(F("/when Conditions met. Pets can just go out now!"));
+			/* complete string */
+			aux = aux + F("Condifions met, door was set at out position!");
 		}
-		/* Close movement */
 		else if(action.movement == 3){
 			
 			/* Debug code */
 			#ifdef DEBUG
-				Serial.print(F("Conditions met. Programmed action close done."));
+				Serial.println(F("Conditions met. Programmed action close done."));
 			#endif
 			
 			/* Actually do the action */
 			close();
 			
-			/* Inform user */
-			sendMessageToAllUsers(F("/when Conditions met. Door closed!"));
+			/* complete string */
+			aux = aux + F("Condifions met, door was closed!");
 		}
-
+		
+		/* Send to all users */
+		sendMessageToAllUsers(aux);
 		
 		/* Next action already done, so clear the variable */
 		clearNextAction();
