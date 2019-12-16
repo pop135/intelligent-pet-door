@@ -44,8 +44,11 @@ commandIssued command;
 /* Extern variables used here */
 extern SoftwareSerial ESP8266Serial;
 extern simpleTBMessage msg;
-extern int nschedule;
+extern uint8_t nschedule;
 extern uint8_t npets;
+extern uint8_t servoState0;
+extern uint8_t servoState1;
+extern uint8_t servoState2;
 
 /*----------FUNCTIONS------------------------------------------------------------*/
 
@@ -61,6 +64,7 @@ void checkCommand(){
 	if (command.commandName == 0) now();
 	else if (command.commandName == 1) program();
 	else if (command.commandName == 2) where();
+	else if (command.commandName == 3) status();
 	
 	/* Command done so reset the structure to allow further commands */
 	clearCommand();
@@ -371,7 +375,7 @@ void program(){
 			
 			/* Once sorted send it to the user */
 			String aux;
-			int scheduledCommandsFound;
+			uint8_t scheduledCommandsFound;
 			
 			for(int i=1;i<8;i++){
 				scheduledCommandsFound = 0;
@@ -526,6 +530,67 @@ void where(){
 		
 	}
 
+}
+
+/* To deal with status command */
+void status(){
+	
+	/* Debug code */
+	#ifdef DEBUG 
+		Serial.println(F("You entered: /status "));
+	#endif
+	
+	/* Open position */
+	if((servoState0 == SERVO_OPEN) && (servoState1 == SERVO_OPEN) && (servoState2 == SERVO_OPEN)){
+		
+		/* Send message to the user */
+		sendMessage(msg.id,F("Door is currently open!"));
+		
+		/* Debug code */
+		#ifdef DEBUG 
+			Serial.println(F("Door is currently open!"));
+		#endif
+		
+	}
+	
+	/* In position */
+	else if((servoState0 == SERVO_CLOSE_180) && (servoState1 == SERVO_OPEN) && (servoState2 == SERVO_OPEN)){
+		
+		/* Send message to the user */
+		sendMessage(msg.id,F("Door is currently at IN position!"));
+		
+		/* Debug code */
+		#ifdef DEBUG 
+			Serial.println(F("Door is currently at IN position!"));
+		#endif
+		
+	}
+	
+	/* Out position */
+	else if((servoState0 == SERVO_OPEN) && (servoState1 == SERVO_CLOSE_0) && (servoState2 == SERVO_CLOSE_180)){
+		
+		/* Send message to the user */
+		sendMessage(msg.id,F("Door is currently at OUT position!"));
+		
+		/* Debug code */
+		#ifdef DEBUG 
+			Serial.println(F("Door is currently at OUT position!"));
+		#endif
+		
+	}
+	
+	/* Close position */
+	else if((servoState0 == SERVO_CLOSE_180) && (servoState1 == SERVO_CLOSE_0) && (servoState2 == SERVO_CLOSE_180)){
+		
+		/* Send message to the user */
+		sendMessage(msg.id,F("Door is currently closed!"));
+		
+		/* Debug code */
+		#ifdef DEBUG 
+			Serial.println(F("Door is currently closed!"));
+		#endif
+		
+	}
 }
 
 /* Search in the EEPROM for a scheduled command  */

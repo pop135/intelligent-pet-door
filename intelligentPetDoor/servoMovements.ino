@@ -43,7 +43,7 @@
 Servo Servo0, Servo1, Servo2;
 
 /* To know in which position the servos are */
-int servoState0, servoState1, servoState2;
+uint8_t servoState0, servoState1, servoState2;
 
 /*----------FUNCTIONS-----------------------------------------------------------*/
 

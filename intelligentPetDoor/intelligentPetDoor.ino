@@ -43,7 +43,7 @@
 /*----------DEFINES--------------------------------------------------------------*/
 
 /* Uncoment this line to allow debug info to be shown througth the serial. */
-#define DEBUG 1
+//#define DEBUG 1
 
 /*----------VARIABLES-----------------------------------------------------------*/
 

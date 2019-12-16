@@ -45,18 +45,18 @@ unsigned long doorEventStart;
 unsigned long doorEventEnd;
 
 /* Door event type */
-int doorEventType;
+uint8_t doorEventType;
 
 /* To step over diferent stages of a door event */
 char debounceFlag;
 
 /* Counts the number of pets inside and outside. Initially all pets are inside */
-int npetsIn;
-int npetsOut;
+uint8_t npetsIn;
+uint8_t npetsOut;
 
 /* Debug code */
 #ifdef DEBUG
-	int isrCount;
+	uint8_t isrCount;
 #endif
 
 /*----------EXTERN--------------------------------------------------------------*/

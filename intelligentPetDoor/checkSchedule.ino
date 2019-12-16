@@ -44,7 +44,7 @@ unsigned long startMillis;
 unsigned long currentMillis;
 
 /* Number of scheduled stored commands */
-int nschedule;
+uint8_t nschedule;
 
 /*----------FUNCTIONS-----------------------------------------------------------*/
 
@@ -76,13 +76,13 @@ void checkSchedule(){
 	unsigned char schedule2;
 	
 	/* To store the actual time */
-	int dayOfWeek,hour,minute;
+	uint8_t dayOfWeek,hour,minute;
 	
 	/* Used to store the information of the scheduled command if any. */
-	int scheduledDayOfWeek,scheduledHour,scheduledMinute,movement;
+	uint8_t scheduledDayOfWeek,scheduledHour,scheduledMinute,movement;
 	
 	/* Used to store the number of schedules found */
-	int schedulesFound=0;
+	uint8_t schedulesFound=0;
 
 	/* Store actual time */
 	currentMillis=millis();
@@ -146,6 +146,9 @@ void checkSchedule(){
 							Serial.println(F(" -> Found a open scheduled command."));
 						#endif
 						
+						/* Inform the users */
+						sendMessageToAllUsers("Scheduled command found, door was opened!");
+						
 					}
 					else if(movement == 1) {
 						
@@ -156,6 +159,9 @@ void checkSchedule(){
 						#ifdef DEBUG
 							Serial.println(F(" -> Found a in scheduled command."));
 						#endif
+						
+						/* Inform the users */
+						sendMessageToAllUsers("Scheduled command found, door was set at in position!");
 						
 					}
 					else if(movement == 2) {
@@ -168,6 +174,9 @@ void checkSchedule(){
 							Serial.println(F(" -> Found a out scheduled command."));
 						#endif
 						
+						/* Inform the users */
+						sendMessageToAllUsers("Scheduled command found, door was set at out position!");
+						
 					}
 					else {
 						
@@ -178,6 +187,9 @@ void checkSchedule(){
 						#ifdef DEBUG
 							Serial.println(F(" -> Found a close scheduled command."));
 						#endif
+						
+						/* Inform the users */
+						sendMessageToAllUsers("Scheduled command found, door was closed!");
 						
 					}
 					

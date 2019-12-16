@@ -45,8 +45,8 @@ extern uint8_t npets;
 void parseInput(){
 
 	/* Auxiliar variables to allow input treatment */
-	int endFirstWord = 0;
-	int nwords=0;
+	uint8_t endFirstWord = 0;
+	uint8_t nwords=0;
 	String word;
 	String input;
 	
@@ -241,10 +241,25 @@ void parseInput(){
 			}
 		}
 		
-		else if(words[0].equals(F("/open"))){
-			command.commandName = 0;
-			command.movement = 0;
+		else if ((words[0].equals(F("/status"))) || (words[0].equals(F("/s")))){
 			if(words[1].equals(F(""))){
+				command.commandName = 3;
+				getUser(msg.id)->errorcount = 0;
+				return;
+			}
+			else{
+				getUser(msg.id)->errorcount++;
+				errorHandler(msg.id,getUser(msg.id)->errorcount);
+				clearCommand();
+				return;
+			}
+		
+		}
+		
+		else if(words[0].equals(F("/open"))){
+			if(words[1].equals(F(""))){
+				command.commandName = 0;
+				command.movement = 0;
 				getUser(msg.id)->errorcount = 0;
 				return;
 			}
@@ -256,9 +271,9 @@ void parseInput(){
 			}
 		}
 		else if(words[0].equals(F("/in"))){
-			command.commandName = 0;
-			command.movement = 1;
 			if(words[1].equals(F(""))){
+				command.commandName = 0;
+				command.movement = 1;
 				getUser(msg.id)->errorcount = 0;
 				return;
 			}
@@ -270,9 +285,9 @@ void parseInput(){
 			}
 		}
 		else if(words[0].equals(F("/out"))){
-			command.commandName = 0;
-			command.movement = 2;
 			if(words[1].equals(F(""))){
+				command.commandName = 0;
+				command.movement = 2;
 				getUser(msg.id)->errorcount = 0;
 				return;
 			}
@@ -284,9 +299,9 @@ void parseInput(){
 			}
 		}
 		else if(words[0].equals(F("/close"))){
-			command.commandName = 0;
-			command.movement = 3;
 			if(words[1].equals(F(""))){
+				command.commandName = 0;
+				command.movement = 3;
 				getUser(msg.id)->errorcount = 0;
 				return;
 			}

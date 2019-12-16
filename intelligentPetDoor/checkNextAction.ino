@@ -42,8 +42,8 @@ nextAction action;
 /*----------EXTERN--------------------------------------------------------------*/
 
 extern unsigned long doorEventEnd;
-extern int npetsIn;
-extern int npetsOut;
+extern uint8_t npetsIn;
+extern uint8_t npetsOut;
 
 /*----------FUNCTIONS-----------------------------------------------------------*/
 
