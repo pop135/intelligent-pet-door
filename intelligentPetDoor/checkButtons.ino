@@ -127,7 +127,7 @@ void checkButtons(){
 		/* If suficient time has passed and door is closed end the door event. */
 		if((digitalRead(BUTTON_PIN_0) == HIGH) && (digitalRead(BUTTON_PIN_1) == HIGH)){
 
-			/* Reset debounce flag and door event star time */
+			/* Reset debounce flag and door event start time */
 			doorEventStart = 0;
 			debounceFlag = 0;
 			

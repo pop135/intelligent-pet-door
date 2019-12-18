@@ -82,7 +82,7 @@
 #define MAX_SCHEDULE 				( MAX_SCHEDULE_A_DAY * 7 )
 
 /* Users position */
-#define USERS_POS 					( 64 )
+#define USERS_POS 					( 59 )
 
 /* Size in bytes that an user reg ocuppies from EEPROM */
 #define USER_SIZE					( 5 )

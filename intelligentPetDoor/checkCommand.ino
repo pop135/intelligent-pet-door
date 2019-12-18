@@ -541,7 +541,7 @@ void status(){
 	#endif
 	
 	/* Open position */
-	if((servoState0 == SERVO_OPEN) && (servoState1 == SERVO_OPEN) && (servoState2 == SERVO_OPEN)){
+	if(doorStatus() == 0){
 		
 		/* Send message to the user */
 		sendMessage(msg.id,F("Door is currently open!"));
@@ -554,7 +554,7 @@ void status(){
 	}
 	
 	/* In position */
-	else if((servoState0 == SERVO_CLOSE_180) && (servoState1 == SERVO_OPEN) && (servoState2 == SERVO_OPEN)){
+	else if(doorStatus() == 1){
 		
 		/* Send message to the user */
 		sendMessage(msg.id,F("Door is currently at IN position!"));
@@ -567,7 +567,7 @@ void status(){
 	}
 	
 	/* Out position */
-	else if((servoState0 == SERVO_OPEN) && (servoState1 == SERVO_CLOSE_0) && (servoState2 == SERVO_CLOSE_180)){
+	else if(doorStatus() == 2){
 		
 		/* Send message to the user */
 		sendMessage(msg.id,F("Door is currently at OUT position!"));
@@ -580,7 +580,7 @@ void status(){
 	}
 	
 	/* Close position */
-	else if((servoState0 == SERVO_CLOSE_180) && (servoState1 == SERVO_CLOSE_0) && (servoState2 == SERVO_CLOSE_180)){
+	else if(doorStatus() == 3){
 		
 		/* Send message to the user */
 		sendMessage(msg.id,F("Door is currently closed!"));

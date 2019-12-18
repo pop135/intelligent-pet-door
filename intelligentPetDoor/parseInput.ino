@@ -622,7 +622,7 @@ void parseInput(){
 						#endif
 						
 						if(action.npetsIn == npets) {
-							if(action.movement == 0) sendMessage(msg.id,F("When all pets w inside I will OPEN the door"));
+							if(action.movement == 0) sendMessage(msg.id,F("When all pets are inside I will OPEN the door"));
 							else if(action.movement == 1) sendMessage(msg.id,F("When all pets are inside I will set the door at IN position"));
 							else if(action.movement == 2) sendMessage(msg.id,F("When all pets are inside I will set the door at OUT position"));
 							else if(action.movement == 3) sendMessage(msg.id,F("When all pets are inside I will CLOSE the door"));
@@ -762,7 +762,7 @@ void showHelp(uint32_t id, int commands){
 		sendMessage(id,F("Intelligent pet door help, try one of these:\n\n/help usual\n/help prog\n/help when\n/help user\n/help pet\n/help actions\n/help dow"));
 	}
 	else if(commands == 1){
-		sendMessage(id,F("Usual commands:\n\n/open - Opens the door\n/in - Allows pets go in but not go out\n/out - Allows pets go out but not go in\n/close - Closes the door\n/where - Shows where are the pets"));
+		sendMessage(id,F("Usual commands:\n\n/open - Opens the door\n/in - Allows pets only go in\n/out - Allows pets only go out\n/close - Closes the door\n/where - Shows where are the pets\n/status - Shows door status"));
 	}
 	else if(commands == 2){
 		sendMessage(id,F("Program commands:\n\n/prog {DoW} HH:MM {action} - Saves command\n/prog del {DoW} HH:MM - Deletes command\n/prog del all - Deletes all commands\n/prog show - Shows all commands"));

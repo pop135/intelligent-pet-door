@@ -51,7 +51,13 @@ uint8_t nschedule;
 void initSchedule(){
 	
 	/* Get the minute before now */
-	minuteBefore = (rtc.now()).minute()-1;
+	minuteBefore = (rtc.now()).minute();
+	if(minuteBefore == 0) {
+		minuteBefore = 59;
+	}
+	else {
+		minuteBefore--;
+	}
 	
 	/* Get the actual time */
 	startMillis=millis();

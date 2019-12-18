@@ -40,6 +40,7 @@ typedef struct commandIssued {
 	/* 0 = /now
 	 * 1 = /program
 	 * 2 = /where
+	 * 3 = /status
 	 */
 	uint8_t commandName;
 	

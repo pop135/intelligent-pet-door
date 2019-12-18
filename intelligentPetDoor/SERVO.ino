@@ -195,4 +195,36 @@ void close(){
 
 }
 
+/* Returns door status */
+uint8_t doorStatus(){
+	
+	/* Open position */
+	if((servoState0 == SERVO_OPEN) && (servoState1 == SERVO_OPEN) && (servoState2 == SERVO_OPEN)){
+		
+		return 0;
+		
+	}
+	
+	/* In position */
+	else if((servoState0 == SERVO_CLOSE_180) && (servoState1 == SERVO_OPEN) && (servoState2 == SERVO_OPEN)){
+		
+		return 1;
+		
+	}
+	
+	/* Out position */
+	else if((servoState0 == SERVO_OPEN) && (servoState1 == SERVO_CLOSE_0) && (servoState2 == SERVO_CLOSE_180)){
+		
+		return 2;
+		
+	}
+	
+	/* Close position */
+	else if((servoState0 == SERVO_CLOSE_180) && (servoState1 == SERVO_CLOSE_0) && (servoState2 == SERVO_CLOSE_180)){
+		
+		return 3;
+		
+	}
+}
+
 /*----------INTERRUPTS----------------------------------------------------------*/
